@@ -1,0 +1,37 @@
+{
+  "name": "hamonikr-chatbot",
+  "version": "1.0.0",
+  "description": "A chatbot application for HamoniKR",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "author": {
+    "name": "HamoniKR",
+    "email": "chaeya@gmail.com"
+  },
+  "homepage": "https://github.com/hamonikr/hamonikr-chatbot",
+  "devDependencies": {
+    "electron": "^32.2.0",
+    "electron-builder": "^25.1.7"
+  },
+  "build": {
+    "appId": "com.hamonikr.chatbot",
+    "productName": "HamoniKR Chatbot",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "node_modules/**/*"
+    ],
+    "linux": {
+      "target": ["deb", "AppImage"],
+      "maintainer": "HamoniKR <chaeya@gmail.com>",
+      "category": "Utility",
+      "icon": "img/icon.png"
+    }
+  }
+}
