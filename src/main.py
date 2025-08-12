@@ -34,7 +34,6 @@ from .constants import app_id
 from .providers import PROVIDERS
 
 import json
-from gpt4all import GPT4All
 import os
 
 user_config_dir = os.environ.get(
@@ -305,21 +304,11 @@ class BavarderApplication(Adw.Application):
     def setup_chat(self):
         if not self.models:
             self.list_models()
-
-        if not self.models:
-            return False
-        else:
-            if self.model is None:
-                if self.model_name not in self.models:
-                    self.download_model(self.model_name)
-                self.model = GPT4All(self.model_name, model_path=model_path)
-            return True
+        return bool(self.models)
 
     def download_model(self, model=None):
         if model:
             self.model_name = model
-        GPT4All.retrieve_model(self.model_name, model_path=model_path,  verbose=True)
-        self.models.add(self.model_name)
 
     def list_models(self):
         self.models = set()

@@ -1,0 +1,46 @@
+Source: hamonikr-chatbot
+Section: utils
+Priority: optional
+Maintainer: HamoniKR <pkg@hamonikr.org>
+Build-Depends: debhelper-compat (= 13),
+               meson (>= 0.62.0),
+               python3-dev,
+               python3-setuptools,
+               libgtk-4-dev (>= 4.5.0),
+               libadwaita-1-dev (>= 1.3.99),
+               libportal-dev (>= 0.6),
+               libgtksourceview-5-dev (>= 5),
+               blueprint-compiler,
+               gettext,
+               desktop-file-utils,
+               appstream-util
+Standards-Version: 4.6.2
+Homepage: https://github.com/hamonikr/hamonikr-chatbot
+Vcs-Git: https://github.com/hamonikr/hamonikr-chatbot.git
+Vcs-Browser: https://github.com/hamonikr/hamonikr-chatbot
+
+Package: hamonikr-chatbot
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         python3,
+         python3-requests,
+         python3-tqdm,
+         python3-babel,
+         python3-openai,
+         python3-pil,
+         gir1.2-gtk-4.0 (>= 4.5.0),
+         gir1.2-adw-1 (>= 1.3.99),
+         gir1.2-xdp-1.0,
+         gir1.2-gtksource-5
+Description: Chit-chat with an AI
+ Bavarder is a chat application that allows you to chat with AI providers
+ like OpenAI, Hugging Face, and more. It provides a user-friendly interface
+ built with GTK4 and Libadwaita.
+ .
+ Features include:
+  - Support for multiple AI providers
+  - Modern GTK4/Libadwaita interface
+  - Chat history management
+  - Export conversations
+  - Customizable preferences
