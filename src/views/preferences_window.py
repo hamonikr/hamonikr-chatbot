@@ -1,9 +1,9 @@
 from gi.repository import Gtk, Adw, Gio
 
-from bavarder.constants import app_id, rootdir
-from bavarder.providers.provider_item import Provider
-from bavarder.widgets.model_item import Model
-from bavarder.widgets.download_row import DownloadRow
+from ..constants import app_id, rootdir
+from ..providers.provider_item import Provider
+from ..widgets.model_item import Model
+from ..widgets.download_row import DownloadRow
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/preferences_window.ui")
 class PreferencesWindow(Adw.PreferencesWindow):

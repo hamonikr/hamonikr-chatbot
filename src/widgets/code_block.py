@@ -1,6 +1,6 @@
 from gi.repository import Gtk, GtkSource, Adw, Xdp
 
-from bavarder.constants import app_id, rootdir
+from ..constants import app_id, rootdir
 
 import subprocess
 from subprocess import SubprocessError, CompletedProcess
