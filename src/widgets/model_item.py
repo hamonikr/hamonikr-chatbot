@@ -3,7 +3,7 @@ import re
 from typing import List, Dict
 from gi.repository import Gtk, Adw, GLib
 
-from bavarder.constants import app_id, rootdir
+from ..constants import app_id, rootdir
 
     
 @Gtk.Template(resource_path=f"{rootdir}/ui/model_item.ui")

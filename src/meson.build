@@ -20,7 +20,7 @@ blueprints = custom_target('blueprints',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@']
 )
 
-gnome.compile_resources('bavarder',
+gnome.compile_resources('hamonikr-chatbot',
   'bavarder.gresource.xml',
   gresource_bundle: true,
   install: true,
@@ -30,11 +30,11 @@ gnome.compile_resources('bavarder',
 
 configure_file(
   input: 'bavarder.in',
-  output: 'bavarder',
+  output: 'hamonikr-chatbot',
   configuration: conf,
   install: true,
   install_dir: get_option('bindir'),
-  install_mode: 'r-xr--r--'
+  install_mode: 'r-xr-xr-x'
 )
 
 configure_file(

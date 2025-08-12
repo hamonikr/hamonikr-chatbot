@@ -1,7 +1,7 @@
 from gi.repository import Gtk, Adw, Gio, GtkSource, Gdk
 
-from bavarder.constants import app_id, rootdir
-from bavarder.views.save_dialog import SaveDialog
+from ..constants import app_id, rootdir
+from .save_dialog import SaveDialog
 
 GtkSource.init()
 

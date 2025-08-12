@@ -25,11 +25,11 @@ import base64
 from gi.repository import Gtk, Gio, Adw, GLib
 from babel.dates import format_date, format_datetime, format_time
 
-from bavarder.constants import app_id, build_type, rootdir
-from bavarder.widgets.thread_item import ThreadItem
-from bavarder.widgets.item import Item
-from bavarder.threading import KillableThread
-from bavarder.views.export_dialog import ExportDialog
+from ..constants import app_id, build_type, rootdir
+from ..widgets.thread_item import ThreadItem
+from ..widgets.item import Item
+from ..threading import KillableThread
+from .export_dialog import ExportDialog
 
 class CustomEntry(Gtk.TextView):
     def __init__(self, **kwargs):

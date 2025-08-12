@@ -6,8 +6,8 @@ import base64
 
 from PIL import Image, UnidentifiedImageError
 
-from bavarder.constants import app_id, rootdir
-from bavarder.widgets.code_block import CodeBlock
+from ..constants import app_id, rootdir
+from .code_block import CodeBlock
 
 
 H1="H1"

@@ -1,7 +1,7 @@
 
 from gi.repository import Gtk, Adw
 
-from bavarder import constants
+from .. import constants
 
 import os
 import platform

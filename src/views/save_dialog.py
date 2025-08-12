@@ -1,6 +1,6 @@
 from gi.repository import Gtk, Adw, Gio, Gdk
 
-from bavarder.constants import app_id, rootdir
+from ..constants import app_id, rootdir
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/save_dialog.ui")
 class SaveDialog(Adw.MessageDialog):

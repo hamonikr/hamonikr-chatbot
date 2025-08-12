@@ -20,6 +20,7 @@
 import sys
 import gi
 import time
+import os
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -34,7 +35,6 @@ from .constants import app_id
 from .providers import PROVIDERS
 
 import json
-import os
 
 user_config_dir = os.environ.get(
     "XDG_CONFIG_HOME", os.environ["HOME"] + "/.config"
@@ -67,7 +67,8 @@ class BavarderApplication(Adw.Application):
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action, ['<primary>comma'])
         self.create_action('new_chat', self.on_new_chat_action, ["<primary>n"])
-        self.create_action('ask', self.on_ask, ["Return"])
+        # NOTE: Avoid plain Return to prevent IME issues; use Ctrl+Enter to send
+        self.create_action('ask', self.on_ask, ["<primary>Return", "<primary>KP_Enter"])
         self.create_action('new_window', self.on_new_window, ["<primary><shift>n"])
 
         self.data_path = os.path.join(user_data_dir, "bavarder")
