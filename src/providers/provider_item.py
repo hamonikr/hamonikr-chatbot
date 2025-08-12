@@ -55,8 +55,8 @@ class Provider(Adw.ExpanderRow):
     # TOOLS
     def slugify(self, value):
         value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
-        value = re.sub('[^\w\s-]', '', value).strip().lower()
-        return re.sub('[-\s]+', '-', value)
+        value = re.sub(r'[^\w\s-]', '', value).strip().lower()
+        return re.sub(r'[-\s]+', '-', value)
 
     def chunk(self, prompt, n=4000):
         if len(prompt) > n:

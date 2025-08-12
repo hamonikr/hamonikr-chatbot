@@ -1,0 +1,2 @@
+# Install files not automatically handled by debhelper
+# Most files should be handled by meson's install target

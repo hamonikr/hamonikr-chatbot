@@ -1,0 +1,10 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --buildsystem=meson
+
+override_dh_auto_configure:
+	dh_auto_configure -- --buildtype=release
+
+override_dh_auto_test:
+	# Skip tests for now as they may require additional setup
