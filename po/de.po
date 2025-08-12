@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 14:46+0100\n"
+"POT-Creation-Date: 2025-08-12 13:17+0900\n"
 "PO-Revision-Date: 2024-03-12 22:53+0000\n"
 "Last-Translator: Dirk <Dirk@users.noreply.translate.codeberg.org>\n"
 "Language-Team: German <https://translate.codeberg.org/projects/bavarder/"
@@ -27,10 +27,50 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 5.4.2\n"
 
-#: data/io.github.Bavarder.Bavarder.desktop.in.in:3 src/views/window.blp:6
-#: src/views/window.blp:26 src/views/window.blp:62 src/views/window.blp:168
-msgid "Bavarder"
-msgstr "Bavarder"
+#: data/io.github.Bavarder.Bavarder.desktop.in.in:3
+msgid "HamoniKR Chatbot"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Allgemein"
+
+#: src/gtk/help-overlay.blp:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Tastenkürzel anzeigen"
+
+#: src/gtk/help-overlay.blp:19
+msgctxt "shortcut window"
+msgid "Preferences"
+msgstr "Einstellungen"
+
+#: src/gtk/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Aufhören"
+
+#: src/gtk/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Close current window"
+msgstr "Aktuelles Fenster schließen"
+
+#: src/gtk/help-overlay.blp:34
+msgctxt "shortcut window"
+msgid "Ask"
+msgstr "Fragen"
+
+#: src/gtk/help-overlay.blp:39
+msgctxt "shortcut window"
+msgid "Cancel Generation"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:44
+#, fuzzy
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "Neues Fenster"
 
 #: src/providers/base.py:8
 msgid "Image"
@@ -84,6 +124,9 @@ msgstr "API Schlüssel"
 msgid "No preferences available"
 msgstr "Keine Einstellungen verfügbar"
 
+#. TRANSLATORS: This is a place to put your credits (formats:
+#. "Name https://example.com" or "Name <email@example.com>",
+#. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
 msgstr "Übersetzerwürdigung"
@@ -117,37 +160,28 @@ msgstr "Schließen"
 msgid "Export"
 msgstr "Exportieren"
 
-#: src/views/preferences_window.py:53 src/views/preferences_window.blp:11
-#: src/views/preferences_window.blp:19 src/views/window.py:313
-msgid "Models"
-msgstr "Modelle"
-
-#: src/views/preferences_window.py:60
-msgid "List of available models"
-msgstr "Liste verfügbarer Modelle"
-
-#: src/views/preferences_window.py:72
+#: src/views/preferences_window.py:51
 msgid "Delete All Threads"
 msgstr "Alle Gespräche löschen"
 
-#: src/views/preferences_window.py:73
+#: src/views/preferences_window.py:52
 msgid "Are you sure you want to delete all threads? This can't be undone!"
 msgstr ""
 "Sicher, dass alle Gespräche gelöscht werden sollen? Dies kann nicht "
 "rückgängig gemacht werden!"
 
-#: src/views/preferences_window.py:77 src/views/save_dialog.blp:7
+#: src/views/preferences_window.py:56 src/views/save_dialog.blp:7
 #: src/views/window.py:219 src/views/window.py:384 src/widgets/item.py:240
 #: src/widgets/thread_item.py:86 src/widgets/thread_item.py:126
 msgid "Cancel"
 msgstr "Abbrechen"
 
-#: src/views/preferences_window.py:78 src/views/window.py:220
+#: src/views/preferences_window.py:57 src/views/window.py:220
 #: src/widgets/thread_item.blp:28 src/widgets/thread_item.py:127
 msgid "Delete"
 msgstr "Löschen"
 
-#: src/views/preferences_window.py:93 src/views/window.py:245
+#: src/views/preferences_window.py:72 src/views/window.py:245
 msgid "All chats cleared!"
 msgstr "Alle Unterhaltungen geleert!"
 
@@ -155,6 +189,11 @@ msgstr "Alle Unterhaltungen geleert!"
 #: src/views/window.py:278 src/views/window.py:316 src/views/window.blp:299
 msgid "Preferences"
 msgstr "Einstellungen"
+
+#: src/views/preferences_window.blp:11 src/views/preferences_window.blp:19
+#: src/views/window.py:313
+msgid "Models"
+msgstr "Modelle"
 
 #: src/views/preferences_window.blp:15 src/views/window.py:275
 msgid "Providers"
@@ -259,6 +298,11 @@ msgstr "Entschuldige, ich weiß nicht, was ich sagen soll."
 #: src/views/window.py:451
 msgid "human"
 msgstr "Mensch"
+
+#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
+#: src/views/window.blp:168
+msgid "Bavarder"
+msgstr "Bavarder"
 
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
@@ -477,7 +521,8 @@ msgstr "Sicher, dass dieses Gespräch gelöscht werden soll?"
 msgid "Thread Deleted"
 msgstr "Gespräch gelöscht"
 
-#: src/main.py:261
+#. NO MODELS:
+#: src/main.py:260
 msgid ""
 "Please download a model from Preferences by clicking on the Dot Menu at the "
 "top!"
@@ -485,13 +530,16 @@ msgstr ""
 "Bitte ein Modell von den Einstellungen durch Klicken des Punktmenüs oben "
 "laden!"
 
-#: src/main.py:265
+#: src/main.py:264
 msgid "Hello, I am Bavarder, a Chit-Chat AI"
 msgstr "Hallo, ich bin Bavarder, eine Plauder-AI"
 
-#: src/main.py:288
+#: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr "Bitte vom Punktmenü einen Anbieter einschalten"
+
+#~ msgid "List of available models"
+#~ msgstr "Liste verfügbarer Modelle"
 
 #~ msgid "Export Thread ?"
 #~ msgstr "Gespräch exportieren?"
@@ -605,35 +653,12 @@ msgstr "Bitte vom Punktmenü einen Anbieter einschalten"
 #~ msgid "New version available!"
 #~ msgstr "Neue Version verfügbar!"
 
-#~ msgid "New Window"
-#~ msgstr "Neues Fenster"
-
 #~ msgid "Wait"
 #~ msgstr "Warten"
 
 #~ msgctxt "shortcut window"
-#~ msgid "General"
-#~ msgstr "Allgemein"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Show Shortcuts"
-#~ msgstr "Tastenkürzel anzeigen"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Ask"
-#~ msgstr "Fragen"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Close current window"
-#~ msgstr "Aktuelles Fenster schließen"
-
-#~ msgctxt "shortcut window"
 #~ msgid "Close all windows"
 #~ msgstr "Alle Fenster schließen"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Preferences"
-#~ msgstr "Einstellungen"
 
 #~ msgctxt "shortcut window"
 #~ msgid "Copy response"
@@ -673,10 +698,6 @@ msgstr "Bitte vom Punktmenü einen Anbieter einschalten"
 #~| msgid "Keyboard Shortcuts"
 #~ msgid "Add more keyboard shortcuts"
 #~ msgstr "Tastatürkürzel"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Quit"
-#~ msgstr "Aufhören"
 
 #~ msgid "Special thanks to"
 #~ msgstr "Besonderer Dank an"

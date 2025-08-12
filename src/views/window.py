@@ -22,7 +22,7 @@ import locale
 import io 
 import base64
 
-from gi.repository import Gtk, Gio, Adw, GLib
+from gi.repository import Gtk, Gio, Adw, GLib, Gdk
 from babel.dates import format_date, format_datetime, format_time
 
 from ..constants import app_id, build_type, rootdir
@@ -35,6 +35,88 @@ class CustomEntry(Gtk.TextView):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         super().set_css_name("entry")
+        # 키 컨트롤러: Enter=전송, Ctrl/Shift+Enter=줄바꿈
+        keyc = Gtk.EventControllerKey.new()
+        keyc.connect("key-pressed", self._on_key_pressed)
+        keyc.connect("key-released", self._on_key_released)
+        self.add_controller(keyc)
+
+        # 전송 지연 상태 관리 (IME 커밋을 기다리기 위함)
+        self._send_pending = False
+        self._send_timeout_id = 0
+        self._buffer_insert_handler = 0
+        
+        # 공통: Enter 키 집합
+        self._enter_keys = (
+            getattr(Gdk, "KEY_Return", 0),
+            getattr(Gdk, "KEY_KP_Enter", 0),
+            getattr(Gdk, "KEY_ISO_Enter", 0),
+            getattr(Gdk, "KEY_3270_Enter", 0),
+        )
+
+    def _attach_send_hooks(self):
+        if self._send_pending:
+            return
+        self._send_pending = True
+        buf = self.get_buffer()
+
+        # IME 커밋으로 실제 텍스트가 삽입되는 순간을 대기
+        def on_insert_text(_buf, _iter, _text, _length):
+            if not self._send_pending:
+                return
+            self._clear_send_hooks()
+            win = self.get_ancestor(Adw.ApplicationWindow)
+            if win and hasattr(win, "on_ask"):
+                GLib.idle_add(win.on_ask)
+
+        # one-shot 연결
+        self._buffer_insert_handler = buf.connect("insert-text", on_insert_text)
+
+        # 폴백 타이머 (120ms)
+        win = self.get_ancestor(Adw.ApplicationWindow)
+        self._send_timeout_id = GLib.timeout_add(120, self._send_fallback, win)
+
+    def _on_key_pressed(self, controller, keyval, keycode, state):
+        # IME가 먼저 처리하도록 기본적으로 FALSE 반환
+        # 단, Enter(키패드 포함)이고 Ctrl/Shift가 아닐 때는 커밋 훅을 선제적으로 심어 신뢰성 보장
+        if keyval in self._enter_keys:
+            if not (state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK)):
+                self._attach_send_hooks()
+        return False
+
+    def _on_key_released(self, controller, keyval, keycode, state):
+        # Shift/Ctrl+Enter는 줄바꿈 유지
+        if keyval in self._enter_keys:
+            if state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SHIFT_MASK):
+                return False
+            # 일반 Enter: 만약 pressed 단계에서 훅을 못 심었으면 여기서 보강
+            if not self._send_pending:
+                self._attach_send_hooks()
+
+                # 이벤트는 소비하지 않음 → TextView가 개행을 추가하지만 곧바로 on_ask에서 버퍼를 비움
+                return False
+        return False
+
+    def _send_fallback(self, win):
+        if self._send_pending and win and hasattr(win, "on_ask"):
+            self._clear_send_hooks()
+            win.on_ask()
+        return False
+
+    def _clear_send_hooks(self):
+        self._send_pending = False
+        if self._buffer_insert_handler:
+            try:
+                self.get_buffer().disconnect(self._buffer_insert_handler)
+            except Exception:
+                pass
+            self._buffer_insert_handler = 0
+        if self._send_timeout_id:
+            try:
+                GLib.source_remove(self._send_timeout_id)
+            except Exception:
+                pass
+            self._send_timeout_id = 0
 
 @Gtk.Template(resource_path=f'{rootdir}/ui/window.ui')
 class BavarderWindow(Adw.ApplicationWindow):
@@ -50,9 +132,7 @@ class BavarderWindow(Adw.ApplicationWindow):
     status_no_thread_main = Gtk.Template.Child()
     status_no_internet = Gtk.Template.Child()
     scrolled_window = Gtk.Template.Child()
-    local_mode_toggle = Gtk.Template.Child()
     provider_selector_button = Gtk.Template.Child()
-    model_selector_button = Gtk.Template.Child()
     banner = Gtk.Template.Child()
     toast_overlay = Gtk.Template.Child()
     stack = Gtk.Template.Child()
@@ -82,9 +162,7 @@ class BavarderWindow(Adw.ApplicationWindow):
         self.scrolled_window.set_child(self.message_entry)
         self.load_threads()
 
-        self.local_mode_toggle.set_active(self.app.local_mode)
-
-        self.on_local_mode_toggled(self.local_mode_toggle)
+        # 로컬/클라우드 모드 토글 제거
 
         self.create_action("cancel", self.cancel, ["<primary>Escape"])
         self.create_action("clear_all", self.on_clear_all)
@@ -261,88 +339,57 @@ class BavarderWindow(Adw.ApplicationWindow):
     def load_provider_selector(self):
         provider_menu = Gio.Menu()
 
-        section = Gio.Menu()
+        # Section: Providers
+        section_providers = Gio.Menu()
         for provider in self.app.providers.values():
             if provider.enabled:
-                item_provider = Gio.MenuItem()
-                item_provider.set_label(provider.name)
+                item_provider = Gio.MenuItem.new(provider.name, None)
                 item_provider.set_action_and_target_value(
                     "app.set_provider",
-                    GLib.Variant("s", provider.slug))
-                section.append_item(item_provider)
-        else:
-            if self.app.providers:
-                provider_menu.append_section(_("Providers"), section)
-            section = Gio.Menu()
-            item_provider = Gio.MenuItem()
-            item_provider.set_label(_("Preferences"))
-            item_provider.set_action_and_target_value("app.preferences", None)
-            section.append_item(item_provider)
+                    GLib.Variant("s", provider.slug)
+                )
+                section_providers.append_item(item_provider)
+        if self.app.providers:
+            provider_menu.append_section(_("Providers"), section_providers)
 
-            item_provider = Gio.MenuItem()
-            item_provider.set_label(_("Clear all"))
-            item_provider.set_action_and_target_value("win.clear_all", None)
-            section.append_item(item_provider)
+        # Section: Current provider's models (if supported)
+        try:
+            current = self.app.providers.get(self.app.current_provider)
+            if current and hasattr(current, 'get_available_models'):
+                models = current.get_available_models() or []
+                if models:
+                    section_models = Gio.Menu()
+                    for mid in models:
+                        item_model = Gio.MenuItem.new(mid, None)
+                        item_model.set_action_and_target_value(
+                            "app.set_provider_model",
+                            GLib.Variant("s", mid)
+                        )
+                        section_models.append_item(item_model)
+                    provider_menu.append_section(_("Models"), section_models)
+        except Exception:
+            pass
 
-            item_provider = Gio.MenuItem()
-            item_provider.set_label(_("Export"))
-            item_provider.set_action_and_target_value("win.export", None)
-            section.append_item(item_provider)
+        # Section: Tools
+        section_tools = Gio.Menu()
+        item_preferences = Gio.MenuItem.new(_("Preferences"), None)
+        item_preferences.set_action_and_target_value("app.preferences", None)
+        section_tools.append_item(item_preferences)
 
-            provider_menu.append_section(None, section)
+        item_clear = Gio.MenuItem.new(_("Clear all"), None)
+        item_clear.set_action_and_target_value("win.clear_all", None)
+        section_tools.append_item(item_clear)
+
+        item_export = Gio.MenuItem.new(_("Export"), None)
+        item_export.set_action_and_target_value("win.export", None)
+        section_tools.append_item(item_export)
+
+        provider_menu.append_section(None, section_tools)
 
         self.provider_selector_button.set_menu_model(provider_menu)
+        self.provider_selector_button.set_visible(True)
 
-    # MODEL - OFFLINE
-    def load_model_selector(self):
-        provider_menu = Gio.Menu()
-
-        if not self.app.models:
-            self.app.list_models()
-
-        section = Gio.Menu()
-        for provider in self.app.models:
-            item_provider = Gio.MenuItem()
-            item_provider.set_label(provider)
-            item_provider.set_action_and_target_value(
-                "app.set_model",
-                GLib.Variant("s", provider))
-            section.append_item(item_provider)
-        else:
-            if self.app.models:
-                provider_menu.append_section(_("Models"), section)
-            section = Gio.Menu()
-            item_provider = Gio.MenuItem()
-            item_provider.set_label(_("Preferences"))
-            item_provider.set_action_and_target_value("app.preferences", None)
-            section.append_item(item_provider)
-
-            item_provider = Gio.MenuItem()
-            item_provider.set_label(_("Clear all"))
-            item_provider.set_action_and_target_value("win.clear_all", None)
-            section.append_item(item_provider)
-
-            item_provider = Gio.MenuItem()
-            item_provider.set_label(_("Export"))
-            item_provider.set_action_and_target_value("win.export", None)
-            section.append_item(item_provider)
-
-            provider_menu.append_section(None, section)
-
-        self.model_selector_button.set_menu_model(provider_menu)
-
-    @Gtk.Template.Callback()
-    def on_local_mode_toggled(self, widget):
-        self.app.local_mode = widget.get_active()
-
-        if self.app.local_mode:
-            self.local_mode_toggle.set_icon_name("cloud-disabled-symbolic")
-            self.model_selector_button.set_visible(True)
-            self.provider_selector_button.set_visible(False)
-        else:
-            self.local_mode_toggle.set_icon_name("cloud-filled-symbolic")
-            self.provider_selector_button.set_visible(True)
-            self.model_selector_button.set_visible(False)
+    # 로컬/오프라인 모델 선택 UI 제거
 
     def check_network(self):
         if self.app.check_network(): # Internet
@@ -360,57 +407,61 @@ class BavarderWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback()
     def on_ask(self, *args):
+        # IME(입력기) 커밋이 버퍼에 완전히 반영된 뒤 처리되도록 충분한 지연(50ms)
+        GLib.timeout_add(50, self._on_ask_after_ime)
+
+    def _on_ask_after_ime(self):
         prompt = self.message_entry.get_buffer().props.text.strip()
-        if prompt:
-            self.message_entry.get_buffer().set_text("")
+        if not prompt:
+            return False
 
-            if not self.chat:
-                self.on_new_chat_action()
+        self.message_entry.get_buffer().set_text("")
 
-                # now get the latest row                    
-                row = self.threads_list.get_row_at_index(len(self.app.data["chats"]) - 1)
+        if not self.chat:
+            self.on_new_chat_action()
 
-               
-                self.threads_list.select_row(row)
-                self.threads_row_activated_cb()
+            # now get the latest row
+            row = self.threads_list.get_row_at_index(len(self.app.data["chats"]) - 1)
 
-            
-            self.add_user_item(prompt)
-                            
+            self.threads_list.select_row(row)
+            self.threads_row_activated_cb()
 
-            def thread_run():
-                self.toast = Adw.Toast()
-                self.toast.set_title(_("Generating response"))
-                self.toast.set_button_label(_("Cancel"))
-                self.toast.set_action_name("win.cancel")
-                self.toast.set_timeout(0)
-                self.toast_overlay.add_toast(self.toast)
-                response = self.app.ask(prompt, self.chat)
-                GLib.idle_add(cleanup, response, self.toast)
+        self.add_user_item(prompt)
 
-            def cleanup(response, toast):
-                try:
-                    self.t.join()
-                    self.toast.dismiss()
+        def thread_run():
+            self.toast = Adw.Toast()
+            self.toast.set_title(_("Generating response"))
+            self.toast.set_button_label(_("Cancel"))
+            self.toast.set_action_name("win.cancel")
+            self.toast.set_timeout(0)
+            self.toast_overlay.add_toast(self.toast)
+            response = self.app.ask(prompt, self.chat)
+            GLib.idle_add(cleanup, response, self.toast)
 
-                    if not response:
-                        self.add_assistant_item(_("Sorry, I don't know what to say."))
-                    else:
-                        if isinstance(response, str):
-                            self.add_assistant_item(response)
-                        else:
-                            buffered = io.BytesIO()
-                            response.save(buffered, format="JPEG")
-                            img_str = base64.b64encode(buffered.getvalue())
+        def cleanup(response, toast):
+            try:
+                self.t.join()
+                self.toast.dismiss()
 
-                            self.add_assistant_item(img_str.decode("utf-8"))
-
-                except AttributeError:
-                    self.toast.dismiss()
+                if not response:
                     self.add_assistant_item(_("Sorry, I don't know what to say."))
+                else:
+                    if isinstance(response, str):
+                        self.add_assistant_item(response)
+                    else:
+                        buffered = io.BytesIO()
+                        response.save(buffered, format="JPEG")
+                        img_str = base64.b64encode(buffered.getvalue())
 
-            self.t = KillableThread(target=thread_run)
-            self.t.start()
+                        self.add_assistant_item(img_str.decode("utf-8"))
+
+            except AttributeError:
+                self.toast.dismiss()
+                self.add_assistant_item(_("Sorry, I don't know what to say."))
+
+        self.t = KillableThread(target=thread_run)
+        self.t.start()
+        return False
 
     # @Gtk.Template.Callback()
     # def on_emoji(self, *args):
@@ -448,7 +499,7 @@ class BavarderWindow(Adw.ApplicationWindow):
                 "role": self.app.user_name,
                 "content": content,
                 "time": self.get_time(),
-                "model": _("human"),
+                "model": "",
             }
         )
 
@@ -463,22 +514,21 @@ class BavarderWindow(Adw.ApplicationWindow):
                 "time": self.get_time(),
             }
 
-        if self.app.local_mode:
-            if self.app.setup_chat():
-                c["model"] = self.app.model_name
-            else:
-                c["model"] = "bavarder"
-        else:
-            l = list(self.app.providers.values())
-
-            for p in l:
-                if p.enabled and p.slug == self.app.current_provider:
-                    c["model"] = self.app.current_provider
-                    break
+        # Provider · Model 표시
+        display_model = "hamonize"
+        try:
+            provider = self.app.providers.get(self.app.current_provider)
+            if provider and provider.enabled:
+                prov_name = getattr(provider, 'name', self.app.current_provider)
+                prov_model = getattr(provider, 'model', None) or getattr(provider, 'data', {}).get('model', '')
+                if prov_model:
+                    display_model = f"{prov_name} · {prov_model}"
                 else:
-                    c["model"] = "bavarder"          
-    
-        
+                    display_model = prov_name
+        except Exception:
+            pass
+        c["model"] = display_model
+
         self.content.append(c)
 
         self.threads_row_activated_cb()

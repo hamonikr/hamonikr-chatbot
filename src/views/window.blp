@@ -97,34 +97,18 @@ template $BavarderWindow : Adw.ApplicationWindow {
         child: Adw.ToolbarView {
           [top]
           Adw.HeaderBar {
-            [start]
-            Gtk.ToggleButton local_mode_toggle {
-              icon-name: 'cloud-disabled-symbolic';
-              toggled => $on_local_mode_toggled();
-            }
-
             [title]
             Adw.WindowTitle title {
               title: _("Chat");
             }
 
-            // [end]
-            // Button clear_all_button {
-            //   icon-name: 'edit-clear-all-symbolic';
-            //   clicked => $on_clear_all();
-            //   visible: false;
-            // }
-
-            [end]
-            MenuButton model_selector_button {
-              icon-name: 'view-more-symbolic';
-              visible: false;
-            }
+            // Button clear_all_button 제거
 
             [end]
             MenuButton provider_selector_button {
               icon-name: 'view-more-symbolic';
-              visible: false;
+              tooltip-text: _("Select provider");
+              visible: true;
             }
 
           }

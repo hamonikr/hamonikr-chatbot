@@ -14,7 +14,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 14:46+0100\n"
+"POT-Creation-Date: 2025-08-12 13:17+0900\n"
 "PO-Revision-Date: 2024-08-09 10:18+0000\n"
 "Last-Translator: NaumovSN <NaumovSN@users.noreply.translate.codeberg.org>\n"
 "Language-Team: Russian <https://translate.codeberg.org/projects/bavarder/"
@@ -27,10 +27,50 @@ msgstr ""
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
 "X-Generator: Weblate 5.6.2\n"
 
-#: data/io.github.Bavarder.Bavarder.desktop.in.in:3 src/views/window.blp:6
-#: src/views/window.blp:26 src/views/window.blp:62 src/views/window.blp:168
-msgid "Bavarder"
-msgstr "Bavarder"
+#: data/io.github.Bavarder.Bavarder.desktop.in.in:3
+msgid "HamoniKR Chatbot"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Общее"
+
+#: src/gtk/help-overlay.blp:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Показать комбинации клавиш"
+
+#: src/gtk/help-overlay.blp:19
+msgctxt "shortcut window"
+msgid "Preferences"
+msgstr "Параметры"
+
+#: src/gtk/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Выйти"
+
+#: src/gtk/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Close current window"
+msgstr "Закрыть текущее окно"
+
+#: src/gtk/help-overlay.blp:34
+msgctxt "shortcut window"
+msgid "Ask"
+msgstr "Спросить"
+
+#: src/gtk/help-overlay.blp:39
+msgctxt "shortcut window"
+msgid "Cancel Generation"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:44
+#, fuzzy
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "Новое окно"
 
 #: src/providers/base.py:8
 msgid "Image"
@@ -83,6 +123,9 @@ msgstr "Ключ API"
 msgid "No preferences available"
 msgstr "Параметры отсутствуют"
 
+#. TRANSLATORS: This is a place to put your credits (formats:
+#. "Name https://example.com" or "Name <email@example.com>",
+#. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
 msgstr "David Lapshin https://codeberg.org/daudix-UFO"
@@ -116,35 +159,26 @@ msgstr "Закрыть"
 msgid "Export"
 msgstr "Экспортировать"
 
-#: src/views/preferences_window.py:53 src/views/preferences_window.blp:11
-#: src/views/preferences_window.blp:19 src/views/window.py:313
-msgid "Models"
-msgstr "Модели"
-
-#: src/views/preferences_window.py:60
-msgid "List of available models"
-msgstr "Список доступных моделей"
-
-#: src/views/preferences_window.py:72
+#: src/views/preferences_window.py:51
 msgid "Delete All Threads"
 msgstr "Удалить все беседы"
 
-#: src/views/preferences_window.py:73
+#: src/views/preferences_window.py:52
 msgid "Are you sure you want to delete all threads? This can't be undone!"
 msgstr "Вы уверены, что хотите удалить все беседы? Это не может быть отменено!"
 
-#: src/views/preferences_window.py:77 src/views/save_dialog.blp:7
+#: src/views/preferences_window.py:56 src/views/save_dialog.blp:7
 #: src/views/window.py:219 src/views/window.py:384 src/widgets/item.py:240
 #: src/widgets/thread_item.py:86 src/widgets/thread_item.py:126
 msgid "Cancel"
 msgstr "Отменить"
 
-#: src/views/preferences_window.py:78 src/views/window.py:220
+#: src/views/preferences_window.py:57 src/views/window.py:220
 #: src/widgets/thread_item.blp:28 src/widgets/thread_item.py:127
 msgid "Delete"
 msgstr "Удалить"
 
-#: src/views/preferences_window.py:93 src/views/window.py:245
+#: src/views/preferences_window.py:72 src/views/window.py:245
 msgid "All chats cleared!"
 msgstr "Все чаты очищены!"
 
@@ -152,6 +186,11 @@ msgstr "Все чаты очищены!"
 #: src/views/window.py:278 src/views/window.py:316 src/views/window.blp:299
 msgid "Preferences"
 msgstr "Параметры"
+
+#: src/views/preferences_window.blp:11 src/views/preferences_window.blp:19
+#: src/views/window.py:313
+msgid "Models"
+msgstr "Модели"
 
 #: src/views/preferences_window.blp:15 src/views/window.py:275
 msgid "Providers"
@@ -256,6 +295,11 @@ msgstr "Извините, я не знаю, что сказать."
 #: src/views/window.py:451
 msgid "human"
 msgstr "человек"
+
+#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
+#: src/views/window.blp:168
+msgid "Bavarder"
+msgstr "Bavarder"
 
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
@@ -470,20 +514,24 @@ msgstr "Вы уверены, что хотите удалить эту бесе�
 msgid "Thread Deleted"
 msgstr "Беседа удалена"
 
-#: src/main.py:261
+#. NO MODELS:
+#: src/main.py:260
 msgid ""
 "Please download a model from Preferences by clicking on the Dot Menu at the "
 "top!"
 msgstr ""
 "Пожалуйста, загрузите модель в Параметрах, нажав на меню с точками сверху!"
 
-#: src/main.py:265
+#: src/main.py:264
 msgid "Hello, I am Bavarder, a Chit-Chat AI"
 msgstr "Здравствуйте, я Bavarder, ИИ болтовни"
 
-#: src/main.py:288
+#: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr "Пожалуйста, включите провайдера в меню с точками"
+
+#~ msgid "List of available models"
+#~ msgstr "Список доступных моделей"
 
 #~ msgid "Export Thread ?"
 #~ msgstr "Экспортировать беседу?"
@@ -599,35 +647,12 @@ msgstr "Пожалуйста, включите провайдера в меню 
 #~ msgid "New version available!"
 #~ msgstr "Доступна новая версия!"
 
-#~ msgid "New Window"
-#~ msgstr "Новое окно"
-
 #~ msgid "Wait"
 #~ msgstr "Ждите"
 
 #~ msgctxt "shortcut window"
-#~ msgid "General"
-#~ msgstr "Общее"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Show Shortcuts"
-#~ msgstr "Показать комбинации клавиш"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Ask"
-#~ msgstr "Спросить"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Close current window"
-#~ msgstr "Закрыть текущее окно"
-
-#~ msgctxt "shortcut window"
 #~ msgid "Close all windows"
 #~ msgstr "Закрыть все окна"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Preferences"
-#~ msgstr "Параметры"
 
 #~ msgctxt "shortcut window"
 #~ msgid "Copy response"
@@ -735,10 +760,6 @@ msgstr "Пожалуйста, включите провайдера в меню 
 
 #~ msgid "First release of Bavarder"
 #~ msgstr "Первый выпуск Bavarder"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Quit"
-#~ msgstr "Выйти"
 
 #~ msgid "Special thanks to"
 #~ msgstr "Особое спасибо"

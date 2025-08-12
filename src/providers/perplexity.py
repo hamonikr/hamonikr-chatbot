@@ -9,13 +9,15 @@ from .base import BaseProvider
 
 class PerplexityProvider(BaseProvider):
     name = "Perplexity"
-    model = "llama-3.1-sonar-large-128k-online"
+    description = _("Perplexity API")
+    default_model = "llama-3.1-sonar-large-128k-online"
     api_key_title = "API Key"
     base_url = "https://api.perplexity.ai"
     
     def __init__(self, app, window):
         super().__init__(app, window)
         self.api_key = self.data.get("api_key", "")
+        self.model = self.data.get("model", self.default_model)
     
     def ask(self, prompt, chat):
         if not self.api_key:
@@ -81,11 +83,22 @@ class PerplexityProvider(BaseProvider):
         self.api_row.add_suffix(self.how_to_get_a_token())
         self.rows.append(self.api_row)
         
+        # 모델 선택
+        self.model_row = Adw.EntryRow()
+        self.model_row.connect("apply", self.on_apply)
+        self.model_row.props.text = self.model or ""
+        self.model_row.props.title = _("Model")
+        self.model_row.set_show_apply_button(True)
+        self.rows.append(self.model_row)
+
         return self.rows
     
     def on_apply(self, widget):
         self.api_key = self.api_row.get_text()
         self.data["api_key"] = self.api_key
+        self.model = self.model_row.get_text() or self.model
+        if self.model:
+            self.data["model"] = self.model
     
     def how_to_get_a_token(self):
         about_button = Gtk.Button()
@@ -102,9 +115,9 @@ class PerplexityProvider(BaseProvider):
 
 class PerplexitySmallProvider(PerplexityProvider):
     name = "Perplexity Small"
-    model = "llama-3.1-sonar-small-128k-online"
+    default_model = "llama-3.1-sonar-small-128k-online"
 
 
 class PerplexityHugeProvider(PerplexityProvider):
     name = "Perplexity Huge"  
-    model = "llama-3.1-sonar-huge-128k-online"
+    default_model = "llama-3.1-sonar-huge-128k-online"

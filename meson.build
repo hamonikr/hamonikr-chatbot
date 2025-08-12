@@ -49,7 +49,7 @@ if not PY_INSTALLDIR.found()
 endif
 
 PKGDATA_DIR = join_paths(get_option('prefix'), get_option('datadir'), meson.project_name())
-MODULE_DIR = join_paths(PKGDATA_DIR, 'bavarder')
+MODULE_DIR = join_paths(PKGDATA_DIR, 'hamonikr_chatbot')
 
 conf = configuration_data()
 conf.set('APP_ID', APPLICATION_ID)

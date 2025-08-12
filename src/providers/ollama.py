@@ -85,13 +85,41 @@ class OllamaProvider(BaseProvider):
         self.url_row.set_show_apply_button(True)
         self.rows.append(self.url_row)
         
-        # Model selection row
+        # Model selection (dynamic via /api/tags) + Custom fallback
+        models = self.get_available_models()
+        if not models:
+            models = [self.model] if self.model else []
+        model_choices = models + ["Custom…"]
+
+        self.model_combo = Adw.ComboRow()
+        self.model_combo.set_title("Model")
+        try:
+            string_list = Gtk.StringList.new(model_choices)
+        except Exception:
+            string_list = Gtk.StringList()
+            for m in model_choices:
+                string_list.append(m)
+        self.model_combo.set_model(string_list)
+        try:
+            idx = model_choices.index(self.model)
+        except Exception:
+            idx = len(model_choices) - 1
+        self.model_combo.set_selected(idx)
+        try:
+            self.model_combo.set_tooltip_text(model_choices[idx])
+        except Exception:
+            pass
+        self.model_combo.connect("notify::selected", self.on_model_combo_changed)
+        self.model_combo.add_suffix(self.how_to_get_models())
+        self.rows.append(self.model_combo)
+
+        # Custom input row
         self.model_row = Adw.EntryRow()
         self.model_row.connect("apply", self.on_apply)
-        self.model_row.props.text = self.model or ""
-        self.model_row.props.title = "Model"
+        self.model_row.props.text = self.model if idx == len(model_choices) - 1 else ""
+        self.model_row.props.title = "Custom model id"
         self.model_row.set_show_apply_button(True)
-        self.model_row.add_suffix(self.how_to_get_models())
+        self.model_row.set_visible(idx == len(model_choices) - 1)
         self.rows.append(self.model_row)
         
         return self.rows
@@ -113,6 +141,22 @@ class OllamaProvider(BaseProvider):
     
     def open_documentation(self, widget):
         Gtk.show_uri(None, "https://ollama.ai/library", 0)
+
+    def on_model_combo_changed(self, combo, _pspec=None):
+        selected = combo.get_selected()
+        if selected < 0:
+            return
+        model_choices = (self.get_available_models() or ([self.model] if self.model else [])) + ["Custom…"]
+        choice = model_choices[selected]
+        is_custom = (choice == "Custom…")
+        self.model_row.set_visible(is_custom)
+        if not is_custom:
+            self.model = choice
+            self.data["model"] = self.model
+        try:
+            self.model_combo.set_tooltip_text(choice)
+        except Exception:
+            pass
 
 
 class OllamaLlama3Provider(OllamaProvider):

@@ -9,14 +9,15 @@ from .base import BaseProvider
 
 class HuggingFaceProvider(BaseProvider):
     name = "HuggingFace"
-    model = "meta-llama/Llama-3.2-3B-Instruct"
+    description = _("HuggingFace Inference API")
+    default_model = "meta-llama/Llama-3.2-3B-Instruct"
     api_key_title = "API Token"
     base_url = "https://api-inference.huggingface.co/models"
     
     def __init__(self, app, window):
         super().__init__(app, window)
         self.api_key = self.data.get("api_key", "")
-        self.model = self.data.get("model", "meta-llama/Llama-3.2-3B-Instruct")
+        self.model = self.data.get("model", self.default_model)
     
     def ask(self, prompt, chat):
         if not self.api_key:
@@ -104,7 +105,7 @@ class HuggingFaceProvider(BaseProvider):
     
     def on_apply(self, widget):
         self.api_key = self.api_row.get_text()
-        self.model = self.model_row.get_text()
+        self.model = self.model_row.get_text() or self.model
         self.data["api_key"] = self.api_key
         self.data["model"] = self.model
     
@@ -135,14 +136,14 @@ class HuggingFaceProvider(BaseProvider):
 
 class HuggingFaceMistralProvider(HuggingFaceProvider):
     name = "HuggingFace Mistral"
-    model = "mistralai/Mistral-7B-Instruct-v0.2"
+    default_model = "mistralai/Mistral-7B-Instruct-v0.2"
 
 
 class HuggingFaceZephyrProvider(HuggingFaceProvider):
     name = "HuggingFace Zephyr"
-    model = "HuggingFaceH4/zephyr-7b-beta"
+    default_model = "HuggingFaceH4/zephyr-7b-beta"
 
 
 class HuggingFaceCodeLlamaProvider(HuggingFaceProvider):
     name = "HuggingFace CodeLlama"
-    model = "codellama/CodeLlama-7b-Instruct-hf"
+    default_model = "codellama/CodeLlama-7b-Instruct-hf"

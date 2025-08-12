@@ -9,7 +9,8 @@ from .base import BaseProvider
 
 class OpenRouterProvider(BaseProvider):
     name = "OpenRouter"
-    model = "anthropic/claude-3.5-sonnet"
+    description = _("여러 벤더의 모델을 통합 라우팅")
+    default_model = "anthropic/claude-3.5-sonnet"
     api_key_title = "API Key"
     base_url = "https://openrouter.ai/api/v1"
     
@@ -18,6 +19,7 @@ class OpenRouterProvider(BaseProvider):
         self.api_key = self.data.get("api_key", "")
         self.site_url = self.data.get("site_url", "https://github.com/hamonikr/hamonikr-chatbot")
         self.site_name = self.data.get("site_name", "HamoniKR Chatbot")
+        self.model = self.data.get("model", self.default_model)
     
     def ask(self, prompt, chat):
         if not self.api_key:
@@ -95,11 +97,19 @@ class OpenRouterProvider(BaseProvider):
         self.model_row.set_show_apply_button(True)
         self.rows.append(self.model_row)
         
+        # Model selection row
+        self.model_row = Adw.EntryRow()
+        self.model_row.connect("apply", self.on_apply)
+        self.model_row.props.text = self.model or ""
+        self.model_row.props.title = "Model"
+        self.model_row.set_show_apply_button(True)
+        self.rows.append(self.model_row)
+
         return self.rows
     
     def on_apply(self, widget):
         self.api_key = self.api_row.get_text()
-        self.model = self.model_row.get_text()
+        self.model = self.model_row.get_text() or self.model
         self.data["api_key"] = self.api_key
         self.data["model"] = self.model
     
@@ -118,14 +128,14 @@ class OpenRouterProvider(BaseProvider):
 
 class OpenRouterGPT4Provider(OpenRouterProvider):
     name = "OpenRouter GPT-4"
-    model = "openai/gpt-4-turbo"
+    default_model = "openai/gpt-4-turbo"
 
 
 class OpenRouterClaudeProvider(OpenRouterProvider):
     name = "OpenRouter Claude"
-    model = "anthropic/claude-3.5-sonnet"
+    default_model = "anthropic/claude-3.5-sonnet"
 
 
 class OpenRouterGeminiProvider(OpenRouterProvider):
     name = "OpenRouter Gemini"
-    model = "google/gemini-pro-1.5"
+    default_model = "google/gemini-pro-1.5"

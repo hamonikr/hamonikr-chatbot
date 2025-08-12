@@ -4,13 +4,13 @@
 		@APP_ID@
 	</id>
 	<name>
-		Bavarder
+		HamoniKR Chatbot
 	</name>
 	<summary>
 		Chit-chat with an AI
 	</summary>
 	<developer_name>
-		0xMRTT
+		HamoniKR
 	</developer_name>
 	<metadata_license>
 		CC0-1.0
@@ -96,7 +96,10 @@
 	</recommends>
 	<keywords>
 		<keyword>
-			Bavarder
+			HamoniKR
+		</keyword>
+		<keyword>
+			Chatbot
 		</keyword>
 		<keyword>
 			Chat

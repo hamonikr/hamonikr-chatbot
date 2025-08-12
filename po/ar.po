@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 14:46+0100\n"
+"POT-Creation-Date: 2025-08-12 13:17+0900\n"
 "PO-Revision-Date: 2024-07-31 00:18+0000\n"
 "Last-Translator: aei <aei@users.noreply.translate.codeberg.org>\n"
 "Language-Team: Arabic <https://translate.codeberg.org/projects/bavarder/"
@@ -25,10 +25,53 @@ msgstr ""
 "&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
 "X-Generator: Weblate 5.6.2\n"
 
-#: data/io.github.Bavarder.Bavarder.desktop.in.in:3 src/views/window.blp:6
-#: src/views/window.blp:26 src/views/window.blp:62 src/views/window.blp:168
-msgid "Bavarder"
-msgstr "ثرثرة"
+#: data/io.github.Bavarder.Bavarder.desktop.in.in:3
+msgid "HamoniKR Chatbot"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:14
+#, fuzzy
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "اختصارات لوحة المفاتيح"
+
+#: src/gtk/help-overlay.blp:19
+#, fuzzy
+msgctxt "shortcut window"
+msgid "Preferences"
+msgstr "التفضيلات"
+
+#: src/gtk/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Close current window"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:34
+#, fuzzy
+msgctxt "shortcut window"
+msgid "Ask"
+msgstr "طرح السؤال"
+
+#: src/gtk/help-overlay.blp:39
+msgctxt "shortcut window"
+msgid "Cancel Generation"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:44
+#, fuzzy
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "نافذة جديدة"
 
 #: src/providers/base.py:8
 msgid "Image"
@@ -78,6 +121,9 @@ msgstr "مفتاح API"
 msgid "No preferences available"
 msgstr "لا توجد تفضيلات متاحة"
 
+#. TRANSLATORS: This is a place to put your credits (formats:
+#. "Name https://example.com" or "Name <email@example.com>",
+#. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
 msgstr "حقوق المترجمين"
@@ -111,36 +157,27 @@ msgstr "غلق"
 msgid "Export"
 msgstr "تصدير"
 
-#: src/views/preferences_window.py:53 src/views/preferences_window.blp:11
-#: src/views/preferences_window.blp:19 src/views/window.py:313
-msgid "Models"
-msgstr "نماذج"
-
-#: src/views/preferences_window.py:60
-msgid "List of available models"
-msgstr ""
-
-#: src/views/preferences_window.py:72
+#: src/views/preferences_window.py:51
 msgid "Delete All Threads"
 msgstr "‏حذف جميع المحادثات"
 
-#: src/views/preferences_window.py:73
+#: src/views/preferences_window.py:52
 msgid "Are you sure you want to delete all threads? This can't be undone!"
 msgstr ""
 "هل أنت متأكد أنك تريد حذف جميع المحادثات؟ لا يمكن التراجع بعد هذه العملية!"
 
-#: src/views/preferences_window.py:77 src/views/save_dialog.blp:7
+#: src/views/preferences_window.py:56 src/views/save_dialog.blp:7
 #: src/views/window.py:219 src/views/window.py:384 src/widgets/item.py:240
 #: src/widgets/thread_item.py:86 src/widgets/thread_item.py:126
 msgid "Cancel"
 msgstr "ألغِ"
 
-#: src/views/preferences_window.py:78 src/views/window.py:220
+#: src/views/preferences_window.py:57 src/views/window.py:220
 #: src/widgets/thread_item.blp:28 src/widgets/thread_item.py:127
 msgid "Delete"
 msgstr "احذف"
 
-#: src/views/preferences_window.py:93 src/views/window.py:245
+#: src/views/preferences_window.py:72 src/views/window.py:245
 msgid "All chats cleared!"
 msgstr ""
 
@@ -148,6 +185,11 @@ msgstr ""
 #: src/views/window.py:278 src/views/window.py:316 src/views/window.blp:299
 msgid "Preferences"
 msgstr "التفضيلات"
+
+#: src/views/preferences_window.blp:11 src/views/preferences_window.blp:19
+#: src/views/window.py:313
+msgid "Models"
+msgstr "نماذج"
 
 #: src/views/preferences_window.blp:15 src/views/window.py:275
 msgid "Providers"
@@ -253,6 +295,11 @@ msgstr ""
 msgid "human"
 msgstr "إنسان"
 
+#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
+#: src/views/window.blp:168
+msgid "Bavarder"
+msgstr "ثرثرة"
+
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
 msgid "New Chat"
@@ -264,7 +311,6 @@ msgstr "القائمة الرئيسية"
 
 #: src/views/window.blp:56
 #, fuzzy
-#| msgid "Chat"
 msgid "No Chats"
 msgstr "محادثة"
 
@@ -278,7 +324,6 @@ msgstr "رسالة"
 
 #: src/views/window.blp:156
 #, fuzzy
-#| msgid "Message"
 msgid "No Messages"
 msgstr "رسالة"
 
@@ -350,13 +395,11 @@ msgstr ""
 
 #: src/widgets/item.py:235
 #, fuzzy
-#| msgid "Message"
 msgid "Save message"
 msgstr "رسالة"
 
 #: src/widgets/item.py:251
 #, fuzzy
-#| msgid "Message"
 msgid "Message copied"
 msgstr "رسالة"
 
@@ -431,7 +474,6 @@ msgstr ""
 
 #: src/widgets/model_item.blp:117
 #, fuzzy
-#| msgid "Prompt"
 msgid "System Prompt"
 msgstr "موجه"
 
@@ -465,17 +507,18 @@ msgstr "هل أنت متأكد أنك تريد حذف هذا؟"
 msgid "Thread Deleted"
 msgstr ""
 
-#: src/main.py:261
+#. NO MODELS:
+#: src/main.py:260
 msgid ""
 "Please download a model from Preferences by clicking on the Dot Menu at the "
 "top!"
 msgstr ""
 
-#: src/main.py:265
+#: src/main.py:264
 msgid "Hello, I am Bavarder, a Chit-Chat AI"
 msgstr ""
 
-#: src/main.py:288
+#: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr ""
 
@@ -569,9 +612,6 @@ msgstr ""
 
 #~ msgid "New version available!"
 #~ msgstr "هنالك إصدار جديد متوفر!"
-
-#~ msgid "New Window"
-#~ msgstr "نافذة جديدة"
 
 #~ msgid "Wait"
 #~ msgstr "يرجى الإنتضار"

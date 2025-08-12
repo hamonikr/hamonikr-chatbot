@@ -281,7 +281,7 @@ msgstr "죄송합니다. 무엇을 말해야 할지 모르겠습니다."
 
 #: src/views/window.py:451
 msgid "human"
-msgstr "사람"
+msgstr "사용자"
 
 #: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
 #: src/views/window.blp:168

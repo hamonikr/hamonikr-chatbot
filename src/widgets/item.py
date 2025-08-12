@@ -35,8 +35,7 @@ m2p_styles = [
     { "name": EMPH, "re": re.compile(r"(^|[^\*])(\*)(.*)(\*)"), "sub": r"\1<i>\3</i>" },
     { "name": EMPH, "re": re.compile(r"(\*)(.*)(\*)([^\*]|$)"), "sub": r"<i>\3</i>\4" }, 
     { "name": PRE, "re": re.compile(r"(`)([^`]*)(`)"), "sub": r"<tt>\2</tt>" },
-    { "name": LINK, "re": re.compile(r"(!)?(\[)(.*)(\]\()(.+)(\))"), "sub": r"<a href='\5'>\3</a>" },
-    { "name": LINK, "re": re.compile(r"(!)?(\[)(.*)(\]\(\))"), "sub": r"<a href='\3'>\3</a>" },
+    # 링크는 아래 안전 처리에서 수행 (href 특수문자 이스케이프)
 ]
 
 re_comment = re.compile(r"^\s*<!--.*-->\s*$")
@@ -279,6 +278,17 @@ class Item(Gtk.Box):
                 line = re.sub(escape[0], escape[1], line)
             return line
 
+        def escape_attr(s: str) -> str:
+            return (
+                s.replace("&", "&amp;")
+                 .replace("<", "&lt;")
+                 .replace(">", "&gt;")
+                 .replace("'", "&apos;")
+                 .replace('"', "&quot;")
+            )
+
+        re_md_link = re.compile(r"\[(?P<text>[^\]]+)\]\((?P<url>[^\s)]+)\)")
+
         # def pad(lines, start=1, end=1):
         #     length = 0
         #     for line in lines:
@@ -393,12 +403,14 @@ class Item(Gtk.Box):
                 result = re.sub(regexp, sub, result)
             
 
-            uri = re_uri.match(result)     # look for any URI
-            href = re_href.match(result)   # and for URIs in href=''
-            atag = re_atag.match(result)   # and for URIs in <a></a>
+            # 마크다운 링크 [text](url) → 안전한 앵커로 변환
+            result = re_md_link.sub(lambda m: f"<a href='{escape_attr(m.group('url'))}'>{m.group('text')}</a>", result)
 
-            if uri and (href or atag):
-                result = result.replace(uri, f"<a href='{uri}'>{uri}</a>")
+            # 벌거벗은 URL을 안전하게 감싸기 (이미 링크 포함이면 패스)
+            if not (re_href.search(result) or re_atag.search(result)):
+                for m in re.finditer(re_uri, result):
+                    u = m.group(0)
+                    result = result.replace(u, f"<a href='{escape_attr(u)}'>{u}</a>")
 
             output.append(result)
 

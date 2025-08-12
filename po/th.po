@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 14:46+0100\n"
+"POT-Creation-Date: 2025-08-12 13:17+0900\n"
 "PO-Revision-Date: 2024-04-29 13:18+0000\n"
 "Last-Translator: Weblate Translation Memory <noreply-mt-weblate-translation-"
 "memory@weblate.org>\n"
@@ -23,10 +23,49 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Generator: Weblate 5.5.2\n"
 
-#: data/io.github.Bavarder.Bavarder.desktop.in.in:3 src/views/window.blp:6
-#: src/views/window.blp:26 src/views/window.blp:62 src/views/window.blp:168
-msgid "Bavarder"
-msgstr "แชท"
+#: data/io.github.Bavarder.Bavarder.desktop.in.in:3
+msgid "HamoniKR Chatbot"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "ทั่วไป"
+
+#: src/gtk/help-overlay.blp:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "แสดงทางลัด"
+
+#: src/gtk/help-overlay.blp:19
+msgctxt "shortcut window"
+msgid "Preferences"
+msgstr "การตั้งค่า"
+
+#: src/gtk/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "ออก"
+
+#: src/gtk/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Close current window"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:34
+msgctxt "shortcut window"
+msgid "Ask"
+msgstr "ถาม"
+
+#: src/gtk/help-overlay.blp:39
+msgctxt "shortcut window"
+msgid "Cancel Generation"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:44
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr ""
 
 #: src/providers/base.py:8
 msgid "Image"
@@ -79,6 +118,9 @@ msgstr "คีย์ API"
 msgid "No preferences available"
 msgstr "ไม่มีค่ากำหนดที่ใช้ได้"
 
+#. TRANSLATORS: This is a place to put your credits (formats:
+#. "Name https://example.com" or "Name <email@example.com>",
+#. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
 msgstr "เครดิตนักแปล"
@@ -112,35 +154,26 @@ msgstr "ปิด"
 msgid "Export"
 msgstr "ส่งออก"
 
-#: src/views/preferences_window.py:53 src/views/preferences_window.blp:11
-#: src/views/preferences_window.blp:19 src/views/window.py:313
-msgid "Models"
-msgstr "โมเดล"
-
-#: src/views/preferences_window.py:60
-msgid "List of available models"
-msgstr "รายการรุ่นที่มีจำหน่าย"
-
-#: src/views/preferences_window.py:72
+#: src/views/preferences_window.py:51
 msgid "Delete All Threads"
 msgstr "ลบกระทู้ทั้งหมด"
 
-#: src/views/preferences_window.py:73
+#: src/views/preferences_window.py:52
 msgid "Are you sure you want to delete all threads? This can't be undone!"
 msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบกระทู้ทั้งหมด? สิ่งนี้ไม่สามารถยกเลิกได้!"
 
-#: src/views/preferences_window.py:77 src/views/save_dialog.blp:7
+#: src/views/preferences_window.py:56 src/views/save_dialog.blp:7
 #: src/views/window.py:219 src/views/window.py:384 src/widgets/item.py:240
 #: src/widgets/thread_item.py:86 src/widgets/thread_item.py:126
 msgid "Cancel"
 msgstr "ยกเลิก"
 
-#: src/views/preferences_window.py:78 src/views/window.py:220
+#: src/views/preferences_window.py:57 src/views/window.py:220
 #: src/widgets/thread_item.blp:28 src/widgets/thread_item.py:127
 msgid "Delete"
 msgstr "ลบ"
 
-#: src/views/preferences_window.py:93 src/views/window.py:245
+#: src/views/preferences_window.py:72 src/views/window.py:245
 msgid "All chats cleared!"
 msgstr "ล้างแชททั้งหมดแล้ว!"
 
@@ -148,6 +181,11 @@ msgstr "ล้างแชททั้งหมดแล้ว!"
 #: src/views/window.py:278 src/views/window.py:316 src/views/window.blp:299
 msgid "Preferences"
 msgstr "การตั้งค่า"
+
+#: src/views/preferences_window.blp:11 src/views/preferences_window.blp:19
+#: src/views/window.py:313
+msgid "Models"
+msgstr "โมเดล"
 
 #: src/views/preferences_window.blp:15 src/views/window.py:275
 msgid "Providers"
@@ -163,8 +201,6 @@ msgstr "ล้างกระทู้ทั้งหมด"
 
 #: src/views/preferences_window.blp:35
 #, fuzzy
-#| msgctxt "shortcut window"
-#| msgid "Clear"
 msgid "Clear"
 msgstr "ล้าง"
 
@@ -254,6 +290,11 @@ msgstr "ขออภัย ฉันไม่รู้จะพูดอะไ�
 msgid "human"
 msgstr "มนุษย์"
 
+#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
+#: src/views/window.blp:168
+msgid "Bavarder"
+msgstr "แชท"
+
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
 msgid "New Chat"
@@ -335,7 +376,6 @@ msgstr "ลบ"
 
 #: src/widgets/item.py:219
 #, fuzzy
-#| msgid "Unable to save the Thread"
 msgid "Failed to save the image"
 msgstr "ไม่สามารถบันทึกกระทู้ได้"
 
@@ -349,7 +389,6 @@ msgstr ""
 
 #: src/widgets/item.py:235
 #, fuzzy
-#| msgid "Message"
 msgid "Save message"
 msgstr "ข้อความ"
 
@@ -431,7 +470,6 @@ msgstr ""
 
 #: src/widgets/model_item.blp:117
 #, fuzzy
-#| msgid "Prompt"
 msgid "System Prompt"
 msgstr "พรอมต์"
 
@@ -465,19 +503,23 @@ msgstr "คุณแน่ใจไหมว่าต้องการลบส
 msgid "Thread Deleted"
 msgstr ""
 
-#: src/main.py:261
+#. NO MODELS:
+#: src/main.py:260
 msgid ""
 "Please download a model from Preferences by clicking on the Dot Menu at the "
 "top!"
 msgstr ""
 
-#: src/main.py:265
+#: src/main.py:264
 msgid "Hello, I am Bavarder, a Chit-Chat AI"
 msgstr ""
 
-#: src/main.py:288
+#: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr ""
+
+#~ msgid "List of available models"
+#~ msgstr "รายการรุ่นที่มีจำหน่าย"
 
 #~ msgid "Export Thread ?"
 #~ msgstr "ส่งออกเธรด ?"
@@ -524,22 +566,6 @@ msgstr ""
 #~ msgstr "รอ"
 
 #~ msgctxt "shortcut window"
-#~ msgid "General"
-#~ msgstr "ทั่วไป"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Show Shortcuts"
-#~ msgstr "แสดงทางลัด"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Ask"
-#~ msgstr "ถาม"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Preferences"
-#~ msgstr "การตั้งค่า"
-
-#~ msgctxt "shortcut window"
 #~ msgid "Copy response"
 #~ msgstr "คัดลอกการตอบกลับ"
 
@@ -573,7 +599,3 @@ msgstr ""
 #~| msgid "Keyboard Shortcuts"
 #~ msgid "Add more keyboard shortcuts"
 #~ msgstr "แป้นพิมพ์ลัด"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Quit"
-#~ msgstr "ออก"

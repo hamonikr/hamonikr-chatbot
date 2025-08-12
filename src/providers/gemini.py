@@ -9,7 +9,8 @@ from .base import BaseProvider
 
 class GeminiProvider(BaseProvider):
     name = "Gemini"
-    model = "gemini-1.5-pro"
+    description = _("Google Gemini API")
+    default_model = "gemini-2.5-pro"
     api_key_title = "API Key"
     
     def __init__(self, app, window):
@@ -18,6 +19,7 @@ class GeminiProvider(BaseProvider):
         self.api_key = self.data.get("api_key", "")
         if self.api_key:
             genai.configure(api_key=self.api_key)
+        self.model = self.data.get("model", self.default_model)
     
     def ask(self, prompt, chat):
         if not self.api_key:
@@ -62,6 +64,38 @@ class GeminiProvider(BaseProvider):
         self.api_row.set_show_apply_button(True)
         self.api_row.add_suffix(self.how_to_get_a_token())
         self.rows.append(self.api_row)
+
+        # 모델 드롭다운 (동적 조회 + 폴백)
+        model_choices = self.fetch_models() + ["Custom…"]
+        self.model_combo = Adw.ComboRow()
+        self.model_combo.set_title(_("Model"))
+        try:
+            string_list = Gtk.StringList.new(model_choices)
+        except Exception:
+            string_list = Gtk.StringList()
+            for m in model_choices:
+                string_list.append(m)
+        self.model_combo.set_model(string_list)
+        try:
+            idx = model_choices.index(self.model)
+        except Exception:
+            idx = len(model_choices) - 1
+        self.model_combo.set_selected(idx)
+        try:
+            self.model_combo.set_tooltip_text(model_choices[idx])
+        except Exception:
+            pass
+        self.model_combo.connect("notify::selected", self.on_model_combo_changed)
+        self.rows.append(self.model_combo)
+
+        # Custom 입력
+        self.model_row = Adw.EntryRow()
+        self.model_row.connect("apply", self.on_apply)
+        self.model_row.props.text = self.model if idx == len(model_choices) - 1 else ""
+        self.model_row.props.title = _("Custom model id")
+        self.model_row.set_show_apply_button(True)
+        self.model_row.set_visible(idx == len(model_choices) - 1)
+        self.rows.append(self.model_row)
         
         return self.rows
     
@@ -70,6 +104,31 @@ class GeminiProvider(BaseProvider):
         if self.api_key:
             genai.configure(api_key=self.api_key)
         self.data["api_key"] = self.api_key
+        self.model = self.model_row.get_text() or self.model
+        if self.model:
+            self.data["model"] = self.model
+
+    def on_model_combo_changed(self, combo, _pspec=None):
+        selected = combo.get_selected()
+        if selected < 0:
+            return
+        model_choices = self.fetch_models() + ["Custom…"]
+        choice = model_choices[selected]
+        is_custom = (choice == "Custom…")
+        self.model_row.set_visible(is_custom)
+        if not is_custom:
+            self.model = choice
+            self.data["model"] = self.model
+
+    def get_available_models(self):
+        try:
+            return self.fetch_models()
+        except Exception:
+            return [self.default_model]
+        try:
+            self.model_combo.set_tooltip_text(choice)
+        except Exception:
+            pass
     
     def how_to_get_a_token(self):
         about_button = Gtk.Button()
@@ -84,11 +143,43 @@ class GeminiProvider(BaseProvider):
         Gtk.show_uri(None, "https://makersuite.google.com/app/apikey", 0)
 
 
+    def fetch_models(self):
+        try:
+            if not self.api_key:
+                # 프리셋 폴백 (대표 최신 라인업 예시)
+                return [
+                    "gemini-2.5-pro",
+                    "gemini-2.5-flash",
+                    "gemini-1.5-pro",
+                    "gemini-1.5-flash",
+                ]
+            # list_models 호출 후 텍스트 생성 가능 모델만 필터
+            models = []
+            for m in genai.list_models():
+                mid = getattr(m, "name", None) or getattr(m, "model", None)
+                if not mid:
+                    continue
+                # 대화/텍스트 생성 가능한 제품군 위주 필터(간단 규칙)
+                if any(k in mid for k in ["gemini", "flash", "pro"]):
+                    models.append(mid)
+            return sorted(list(dict.fromkeys(models))) or [
+                "gemini-2.5-pro",
+                "gemini-2.5-flash",
+                "gemini-1.5-pro",
+                "gemini-1.5-flash",
+            ]
+        except Exception:
+            return [
+                "gemini-2.5-pro",
+                "gemini-2.5-flash",
+                "gemini-1.5-pro",
+                "gemini-1.5-flash",
+            ]
 class GeminiFlashProvider(GeminiProvider):
     name = "Gemini Flash"
-    model = "gemini-1.5-flash"
+    default_model = "gemini-2.5-flash"
 
 
 class GeminiProProvider(GeminiProvider):  
     name = "Gemini Pro"
-    model = "gemini-1.5-pro"
+    default_model = "gemini-2.5-pro"
