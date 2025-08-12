@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 14:46+0100\n"
+"POT-Creation-Date: 2025-08-12 13:17+0900\n"
 "PO-Revision-Date: 2024-02-25 13:48+0000\n"
 "Last-Translator: 0xMRTT <0xmrtt@proton.me>\n"
 "Language-Team: French <https://translate.codeberg.org/projects/bavarder/"
@@ -24,10 +24,50 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
 "X-Generator: Weblate 5.4\n"
 
-#: data/io.github.Bavarder.Bavarder.desktop.in.in:3 src/views/window.blp:6
-#: src/views/window.blp:26 src/views/window.blp:62 src/views/window.blp:168
-msgid "Bavarder"
-msgstr "Bavarder"
+#: data/io.github.Bavarder.Bavarder.desktop.in.in:3
+msgid "HamoniKR Chatbot"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Général"
+
+#: src/gtk/help-overlay.blp:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Afficher les raccourcis"
+
+#: src/gtk/help-overlay.blp:19
+msgctxt "shortcut window"
+msgid "Preferences"
+msgstr "Préférences"
+
+#: src/gtk/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Quitter"
+
+#: src/gtk/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Close current window"
+msgstr "Fermer la fenêtre actuelle"
+
+#: src/gtk/help-overlay.blp:34
+msgctxt "shortcut window"
+msgid "Ask"
+msgstr "Demander"
+
+#: src/gtk/help-overlay.blp:39
+msgctxt "shortcut window"
+msgid "Cancel Generation"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:44
+#, fuzzy
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "Nouvelle fenêtre"
 
 #: src/providers/base.py:8
 msgid "Image"
@@ -80,6 +120,9 @@ msgstr "Clé d’API"
 msgid "No preferences available"
 msgstr "Pas de préférences disponibles"
 
+#. TRANSLATORS: This is a place to put your credits (formats:
+#. "Name https://example.com" or "Name <email@example.com>",
+#. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
 msgstr "Irénée Thirion"
@@ -113,37 +156,28 @@ msgstr "Fermer"
 msgid "Export"
 msgstr "Exporter"
 
-#: src/views/preferences_window.py:53 src/views/preferences_window.blp:11
-#: src/views/preferences_window.blp:19 src/views/window.py:313
-msgid "Models"
-msgstr "Modèles"
-
-#: src/views/preferences_window.py:60
-msgid "List of available models"
-msgstr "Liste des modèles disponibles"
-
-#: src/views/preferences_window.py:72
+#: src/views/preferences_window.py:51
 msgid "Delete All Threads"
 msgstr "Supprimer toutes les discussions"
 
-#: src/views/preferences_window.py:73
+#: src/views/preferences_window.py:52
 msgid "Are you sure you want to delete all threads? This can't be undone!"
 msgstr ""
 "Souhaitez-vous vraiment supprimer toutes les discussions ? Cette action ne "
 "pourra être annulée !"
 
-#: src/views/preferences_window.py:77 src/views/save_dialog.blp:7
+#: src/views/preferences_window.py:56 src/views/save_dialog.blp:7
 #: src/views/window.py:219 src/views/window.py:384 src/widgets/item.py:240
 #: src/widgets/thread_item.py:86 src/widgets/thread_item.py:126
 msgid "Cancel"
 msgstr "Annuler"
 
-#: src/views/preferences_window.py:78 src/views/window.py:220
+#: src/views/preferences_window.py:57 src/views/window.py:220
 #: src/widgets/thread_item.blp:28 src/widgets/thread_item.py:127
 msgid "Delete"
 msgstr "Supprimer"
 
-#: src/views/preferences_window.py:93 src/views/window.py:245
+#: src/views/preferences_window.py:72 src/views/window.py:245
 msgid "All chats cleared!"
 msgstr "Toutes les discussions ont été effacées !"
 
@@ -151,6 +185,11 @@ msgstr "Toutes les discussions ont été effacées !"
 #: src/views/window.py:278 src/views/window.py:316 src/views/window.blp:299
 msgid "Preferences"
 msgstr "Préférences"
+
+#: src/views/preferences_window.blp:11 src/views/preferences_window.blp:19
+#: src/views/window.py:313
+msgid "Models"
+msgstr "Modèles"
 
 #: src/views/preferences_window.blp:15 src/views/window.py:275
 msgid "Providers"
@@ -255,6 +294,11 @@ msgstr "Désolé, je ne sais pas quoi dire."
 #: src/views/window.py:451
 msgid "human"
 msgstr "Humain"
+
+#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
+#: src/views/window.blp:168
+msgid "Bavarder"
+msgstr "Bavarder"
 
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
@@ -472,7 +516,8 @@ msgstr "Voulez-vous vraiment supprimer cette discussion ?"
 msgid "Thread Deleted"
 msgstr "Discussion supprimée"
 
-#: src/main.py:261
+#. NO MODELS:
+#: src/main.py:260
 msgid ""
 "Please download a model from Preferences by clicking on the Dot Menu at the "
 "top!"
@@ -480,13 +525,16 @@ msgstr ""
 "Merci de télécharger un modèle depuis les Préférences en cliquant sur le "
 "Menu en pointillés en haut !"
 
-#: src/main.py:265
+#: src/main.py:264
 msgid "Hello, I am Bavarder, a Chit-Chat AI"
 msgstr "Bonjour, je suis Bavarder, une IA pour bavarder"
 
-#: src/main.py:288
+#: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr "Merci d’activer un modèle depuis le Menu en pointillés"
+
+#~ msgid "List of available models"
+#~ msgstr "Liste des modèles disponibles"
 
 #~ msgid "Export Thread ?"
 #~ msgstr "Exporter le fil ?"
@@ -600,35 +648,12 @@ msgstr "Merci d’activer un modèle depuis le Menu en pointillés"
 #~ msgid "New version available!"
 #~ msgstr "Nouvelle version disponible !"
 
-#~ msgid "New Window"
-#~ msgstr "Nouvelle fenêtre"
-
 #~ msgid "Wait"
 #~ msgstr "Attendez"
 
 #~ msgctxt "shortcut window"
-#~ msgid "General"
-#~ msgstr "Général"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Show Shortcuts"
-#~ msgstr "Afficher les raccourcis"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Ask"
-#~ msgstr "Demander"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Close current window"
-#~ msgstr "Fermer la fenêtre actuelle"
-
-#~ msgctxt "shortcut window"
 #~ msgid "Close all windows"
 #~ msgstr "Fermer toutes les fenêtres"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Preferences"
-#~ msgstr "Préférences"
 
 #~ msgctxt "shortcut window"
 #~ msgid "Copy response"
@@ -674,10 +699,6 @@ msgstr "Merci d’activer un modèle depuis le Menu en pointillés"
 #~| msgid "Keyboard Shortcuts"
 #~ msgid "Add more keyboard shortcuts"
 #~ msgstr "Raccourcis clavier"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Quit"
-#~ msgstr "Quitter"
 
 #~ msgid "Special thanks to"
 #~ msgstr "Remerciements spéciaux à"

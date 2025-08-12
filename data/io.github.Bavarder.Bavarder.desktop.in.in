@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=Bavarder
-Exec=bavarder
+Name=HamoniKR Chatbot
+Exec=hamonikr-chatbot
 Icon=@APP_ID@
 Terminal=false
 Type=Application

@@ -11,7 +11,6 @@ class PreferencesWindow(Adw.PreferencesWindow):
 
     provider_group = Gtk.Template.Child()
     general_page = Gtk.Template.Child()
-    model_group = Gtk.Template.Child()
     miscellaneous_group = Gtk.Template.Child()
     user_name = Gtk.Template.Child()
     bot_name = Gtk.Template.Child()

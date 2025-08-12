@@ -54,8 +54,37 @@ class BaseProvider:
     def set_enabled(self, status):
         self.app.data["providers"][self.slug]["enabled"] = status
 
-    def ask(self, prompt, chat):
+    def ask(self, prompt, chat, stream=False, callback=None):
+        """
+        Ask the provider to generate a response.
+        
+        Args:
+            prompt: The user's prompt
+            chat: The conversation history
+            stream: Whether to stream the response
+            callback: Callback function for streaming responses (token) -> None
+        
+        Returns:
+            Complete response text (for non-streaming) or None (for streaming)
+        """
         raise NotImplementedError()
+
+    def ask_stream(self, prompt, chat, callback=None):
+        """
+        Stream-enabled version of ask method.
+        Default implementation falls back to non-streaming.
+        Override this in providers that support streaming.
+        
+        Args:
+            prompt: The user's prompt  
+            chat: The conversation history
+            callback: Function to call with each token/chunk
+        """
+        # Fallback to non-streaming for providers that don't support it
+        response = self.ask(prompt, chat, stream=False)
+        if callback and response:
+            callback(response)
+        return response
 
     def load_authentification(self):
         """Must set self.has_auth to True when auth is done"""

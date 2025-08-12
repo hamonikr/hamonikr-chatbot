@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 14:46+0100\n"
+"POT-Creation-Date: 2025-08-12 13:17+0900\n"
 "PO-Revision-Date: 2024-02-25 13:48+0000\n"
 "Last-Translator: Weblate Translation Memory <noreply-mt-weblate-translation-"
 "memory@weblate.org>\n"
@@ -23,10 +23,50 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Weblate 5.4\n"
 
-#: data/io.github.Bavarder.Bavarder.desktop.in.in:3 src/views/window.blp:6
-#: src/views/window.blp:26 src/views/window.blp:62 src/views/window.blp:168
-msgid "Bavarder"
-msgstr "Bavarder"
+#: data/io.github.Bavarder.Bavarder.desktop.in.in:3
+msgid "HamoniKR Chatbot"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Obecné"
+
+#: src/gtk/help-overlay.blp:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Zobrazit zkratky"
+
+#: src/gtk/help-overlay.blp:19
+msgctxt "shortcut window"
+msgid "Preferences"
+msgstr "Nastavení"
+
+#: src/gtk/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Ukončit"
+
+#: src/gtk/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Close current window"
+msgstr "Zavřít aktuální okno"
+
+#: src/gtk/help-overlay.blp:34
+msgctxt "shortcut window"
+msgid "Ask"
+msgstr "Zeptat se"
+
+#: src/gtk/help-overlay.blp:39
+msgctxt "shortcut window"
+msgid "Cancel Generation"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:44
+#, fuzzy
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "Nové okno"
 
 #: src/providers/base.py:8
 msgid "Image"
@@ -68,7 +108,6 @@ msgstr ""
 
 #: src/providers/hfbasechat.py:50
 #, fuzzy, python-brace-format
-#| msgid "Sorry, I don't know what to say!"
 msgid "Sorry, I don't know what to say! (Error: {output})"
 msgstr "Omlouvám se, ale nevím, co na to říct!"
 
@@ -80,6 +119,9 @@ msgstr "Klíč API"
 msgid "No preferences available"
 msgstr "Žádná nastavení nejsou k dispozici"
 
+#. TRANSLATORS: This is a place to put your credits (formats:
+#. "Name https://example.com" or "Name <email@example.com>",
+#. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
 msgstr "Překladatelé"
@@ -113,35 +155,26 @@ msgstr "Zavřít"
 msgid "Export"
 msgstr "Export"
 
-#: src/views/preferences_window.py:53 src/views/preferences_window.blp:11
-#: src/views/preferences_window.blp:19 src/views/window.py:313
-msgid "Models"
-msgstr "Modely"
-
-#: src/views/preferences_window.py:60
-msgid "List of available models"
-msgstr "Seznam dostupných modelů"
-
-#: src/views/preferences_window.py:72
+#: src/views/preferences_window.py:51
 msgid "Delete All Threads"
 msgstr "Odstranit všechna vlákna"
 
-#: src/views/preferences_window.py:73
+#: src/views/preferences_window.py:52
 msgid "Are you sure you want to delete all threads? This can't be undone!"
 msgstr "Opravdu chcete odstranit všechna vlákna? Tento krok se nedá vrátit!"
 
-#: src/views/preferences_window.py:77 src/views/save_dialog.blp:7
+#: src/views/preferences_window.py:56 src/views/save_dialog.blp:7
 #: src/views/window.py:219 src/views/window.py:384 src/widgets/item.py:240
 #: src/widgets/thread_item.py:86 src/widgets/thread_item.py:126
 msgid "Cancel"
 msgstr "Zrušit"
 
-#: src/views/preferences_window.py:78 src/views/window.py:220
+#: src/views/preferences_window.py:57 src/views/window.py:220
 #: src/widgets/thread_item.blp:28 src/widgets/thread_item.py:127
 msgid "Delete"
 msgstr "Odstranit"
 
-#: src/views/preferences_window.py:93 src/views/window.py:245
+#: src/views/preferences_window.py:72 src/views/window.py:245
 msgid "All chats cleared!"
 msgstr "Všechny chaty vymazány!"
 
@@ -149,6 +182,11 @@ msgstr "Všechny chaty vymazány!"
 #: src/views/window.py:278 src/views/window.py:316 src/views/window.blp:299
 msgid "Preferences"
 msgstr "Nastavení"
+
+#: src/views/preferences_window.blp:11 src/views/preferences_window.blp:19
+#: src/views/window.py:313
+msgid "Models"
+msgstr "Modely"
 
 #: src/views/preferences_window.blp:15 src/views/window.py:275
 msgid "Providers"
@@ -254,6 +292,11 @@ msgstr "Omlouvám se, ale nevím, co na to říct."
 msgid "human"
 msgstr "Člověk"
 
+#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
+#: src/views/window.blp:168
+msgid "Bavarder"
+msgstr "Bavarder"
+
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
 msgid "New Chat"
@@ -335,7 +378,6 @@ msgstr "Odstranit"
 
 #: src/widgets/item.py:219
 #, fuzzy
-#| msgid "Unable to save the Thread"
 msgid "Failed to save the image"
 msgstr "Nelze uložit vlákno"
 
@@ -349,7 +391,6 @@ msgstr ""
 
 #: src/widgets/item.py:235
 #, fuzzy
-#| msgid "Message"
 msgid "Save message"
 msgstr "Zpráva"
 
@@ -470,7 +511,8 @@ msgstr "Opravdu chcete toto vlákno odstranit?"
 msgid "Thread Deleted"
 msgstr "Vlákno bylo odstraněno"
 
-#: src/main.py:261
+#. NO MODELS:
+#: src/main.py:260
 msgid ""
 "Please download a model from Preferences by clicking on the Dot Menu at the "
 "top!"
@@ -478,13 +520,16 @@ msgstr ""
 "Prosím, stáhněte si model z nastavení kliknutím na tečkové menu v horní "
 "části!"
 
-#: src/main.py:265
+#: src/main.py:264
 msgid "Hello, I am Bavarder, a Chit-Chat AI"
 msgstr "Ahoj, jsem Bavarder, AI pro chatování"
 
-#: src/main.py:288
+#: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr "Prosím, vyberte si poskytovatele kliknutím na nabídku s tečkou"
+
+#~ msgid "List of available models"
+#~ msgstr "Seznam dostupných modelů"
 
 #~ msgid "Export Thread ?"
 #~ msgstr "Exportovat vlákno?"
@@ -585,35 +630,12 @@ msgstr "Prosím, vyberte si poskytovatele kliknutím na nabídku s tečkou"
 #~ msgid "New version available!"
 #~ msgstr "Nová verze je k dispozici!"
 
-#~ msgid "New Window"
-#~ msgstr "Nové okno"
-
 #~ msgid "Wait"
 #~ msgstr "Čekejte"
 
 #~ msgctxt "shortcut window"
-#~ msgid "General"
-#~ msgstr "Obecné"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Show Shortcuts"
-#~ msgstr "Zobrazit zkratky"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Ask"
-#~ msgstr "Zeptat se"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Close current window"
-#~ msgstr "Zavřít aktuální okno"
-
-#~ msgctxt "shortcut window"
 #~ msgid "Close all windows"
 #~ msgstr "Zavřít všechna okna"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Preferences"
-#~ msgstr "Nastavení"
 
 #~ msgctxt "shortcut window"
 #~ msgid "Copy response"
@@ -652,10 +674,6 @@ msgstr "Prosím, vyberte si poskytovatele kliknutím na nabídku s tečkou"
 #~| msgid "Keyboard Shortcuts"
 #~ msgid "Add more keyboard shortcuts"
 #~ msgstr "Klávesové zkratky"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Quit"
-#~ msgstr "Ukončit"
 
 #~ msgid "Special thanks to"
 #~ msgstr "Zvláštní poděkování patří"

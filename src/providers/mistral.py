@@ -9,7 +9,13 @@ class MistralBaseProvider(BaseProvider):
     description = "Mistral AI API"
 
     api_key_title = "API Key"
-    model = None
+    # 통합: 기본 모델 지정, 설정에서 덮어쓰기 가능
+    default_model = "mistral-large-latest"
+
+    def __init__(self, app, window):
+        super().__init__(app, window)
+        # 저장된 모델 우선, 없으면 기본값
+        self.model = self.data.get("model", getattr(self, "model", None) or self.default_model)
 
     def ask(self, prompt, chat):
         messages = []
@@ -55,16 +61,26 @@ class MistralBaseProvider(BaseProvider):
         self.api_row.add_suffix(self.how_to_get_a_token())
         self.rows.append(self.api_row)
 
+        # 모델 선택
+        self.model_row = Adw.EntryRow()
+        self.model_row.connect("apply", self.on_apply)
+        self.model_row.props.text = self.model or ""
+        self.model_row.props.title = _("Model")
+        self.model_row.set_show_apply_button(True)
+        self.rows.append(self.model_row)
+
         return self.rows
 
     def on_apply(self, widget):
         api_key = self.api_row.get_text()
         self.data["api_key"] = api_key
+        self.model = self.model_row.get_text() or self.model
+        if self.model:
+            self.data["model"] = self.model
 
 
 class MistralLargeProvider(MistralBaseProvider):
-    name = "Mistral Large"
-    description = "복잡한 이해와 추론에 강한 Mistral 대형 모델"
-    model = "mistral-large-latest"
+    name = "Mistral"
+    description = "Mistral AI API"
 
 

@@ -1,1 +1,1 @@
-i18n.gettext('bavarder', preset: 'glib')
+i18n.gettext('hamonikr-chatbot', preset: 'glib')

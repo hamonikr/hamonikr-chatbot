@@ -4,6 +4,11 @@ from openai import OpenAI
 import socket
 import os
 import json
+import io
+import base64
+import requests
+from PIL import Image, UnidentifiedImageError
+from gettext import gettext as _
 
 from gi.repository import Gtk, Adw, GLib
 
@@ -30,41 +35,65 @@ class BaseOpenAIImageProvider(BaseImageProvider):
             self.client.base_url = self.data["api_base"]
 
     def ask(self, prompt, chat):
-        if self.model:
-            prompt = self.chunk(prompt)
-            try:
-                response = self.client.images.generate(
-                    model=self.model,
-                    prompt=prompt,
-                    size="1024x1024",
-                    quality="standard",
-                    n=1,
-                )
-                image_url = response.data[0].url
-                image_bytes = requests.get(image_url).content
-
-            except openai.AuthenticationError:
-                return _("Your API key is invalid, please check your preferences.")
-            except openai.BadRequestError:
-                return _("You don't have access to this model, please check your plan and billing details.")
-            except openai.RateLimitError:
-                return _("You exceeded your current quota, please check your plan and billing details.")
-            except openai.APIConnectionError:
-                return _("I'm having trouble connecting to the API, please check your internet connection.")
-            except socket.gaierror:
-                return _("I'm having trouble connecting to the API, please check your internet connection.")
-            else:
-                if image_bytes:
-                    try:
-                        return Image.open(io.BytesIO(image_bytes))
-                    except UnidentifiedImageError:
-                        error = json.loads(image_bytes)["error"]
-                        return error
-                else:
-                    return None
-
-        else:
+        if not self.model:
             return _("No model selected, you can choose one in preferences")
+
+        # 이미지 생성은 프롬프트를 문자열로 전달해야 함
+        prompt_str = str(prompt)
+
+        # 모델별 안전한 파라미터 구성
+        kwargs = {
+            "model": self.model,
+            "prompt": prompt_str,
+        }
+        # DALL·E 계열은 size/quality/n 지원, gpt-image-1은 최소 인자만 사용
+        if self.model in ("dall-e-2", "dall-e-3"):
+            kwargs["size"] = "1024x1024"
+            if self.model == "dall-e-2":
+                kwargs["quality"] = "standard"
+                kwargs["n"] = 1
+
+        try:
+            response = self.client.images.generate(**kwargs)
+
+            data0 = response.data[0] if getattr(response, "data", None) else None
+            image_bytes = None
+
+            # gpt-image-1: b64_json 제공
+            b64 = getattr(data0, "b64_json", None)
+            if b64:
+                try:
+                    image_bytes = base64.b64decode(b64)
+                except Exception:
+                    image_bytes = None
+
+            # DALL·E: url 제공
+            if image_bytes is None:
+                image_url = getattr(data0, "url", None)
+                if image_url:
+                    image_bytes = requests.get(image_url, timeout=30).content
+
+            if image_bytes:
+                try:
+                    return Image.open(io.BytesIO(image_bytes))
+                except UnidentifiedImageError:
+                    try:
+                        error = json.loads(image_bytes).get("error")
+                        return str(error)
+                    except Exception:
+                        return _("Failed to decode image data")
+            return None
+
+        except openai.AuthenticationError:
+            return _("Your API key is invalid, please check your preferences.")
+        except openai.BadRequestError as e:
+            return _("You don't have access to this model, please check your plan and billing details.")
+        except openai.RateLimitError:
+            return _("You exceeded your current quota, please check your plan and billing details.")
+        except openai.APIConnectionError:
+            return _("I'm having trouble connecting to the API, please check your internet connection.")
+        except socket.gaierror:
+            return _("I'm having trouble connecting to the API, please check your internet connection.")
 
 
     def get_settings_rows(self):

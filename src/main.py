@@ -67,8 +67,8 @@ class BavarderApplication(Adw.Application):
         self.create_action('about', self.on_about_action)
         self.create_action('preferences', self.on_preferences_action, ['<primary>comma'])
         self.create_action('new_chat', self.on_new_chat_action, ["<primary>n"])
-        # NOTE: Avoid plain Return to prevent IME issues; use Ctrl+Enter to send
-        self.create_action('ask', self.on_ask, ["<primary>Return", "<primary>KP_Enter"])
+        # 키 입력은 위젯 단에서 처리(Enter=전송, Ctrl/Shift+Enter=줄바꿈)
+        self.create_action('ask', self.on_ask)
         self.create_action('new_window', self.on_new_window, ["<primary><shift>n"])
 
         self.data_path = os.path.join(user_data_dir, "bavarder")
@@ -118,6 +118,14 @@ class BavarderApplication(Adw.Application):
             self.on_set_model_action
         )
 
+        # Online provider model selection (for current provider)
+        self.create_stateful_action(
+            "set_provider_model",
+            GLib.VariantType.new("s"),
+            GLib.Variant("s", ""),
+            self.on_set_provider_model_action
+        )
+
         self.bot_name = self.settings.get_string("bot-name")
         self.user_name = self.settings.get_string("user-name")
 
@@ -125,6 +133,12 @@ class BavarderApplication(Adw.Application):
     def on_set_provider_action(self, action, *args):
         self.current_provider = args[0].get_string()
         Gio.SimpleAction.set_state(self.lookup_action("set_provider"), args[0])
+        # 프로바이더 변경 시 상단 메뉴의 모델 섹션을 현재 프로바이더 기준으로 재구성
+        try:
+            if self.win:
+                self.win.load_provider_selector()
+        except Exception:
+            pass
 
     def on_set_model_action(self, action, *args):
         previous = self.model_name
@@ -133,6 +147,29 @@ class BavarderApplication(Adw.Application):
             # reset model for loading the new one
             self.model = None
         Gio.SimpleAction.set_state(self.lookup_action("set_model"), args[0])
+
+    def on_set_provider_model_action(self, action, *args):
+        """Set the model for the currently selected online provider."""
+        try:
+            model_id = args[0].get_string()
+        except Exception:
+            model_id = ""
+        if not model_id:
+            return
+        # Find current provider and update its model
+        try:
+            provider = self.providers.get(self.current_provider)
+            if provider is not None:
+                # Persist into provider data and instance attribute if present
+                if hasattr(provider, 'data'):
+                    provider.data["model"] = model_id
+                try:
+                    provider.model = model_id
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        Gio.SimpleAction.set_state(self.lookup_action("set_provider_model"), args[0])
 
     def save(self):
         with open(self.data_path, "w", encoding="utf-8") as f:
@@ -201,7 +238,7 @@ class BavarderApplication(Adw.Application):
 
             self.providers[p.slug] = p
 
-        win.load_model_selector()
+        # 오프라인 모델 선택 UI 제거됨
         win.load_provider_selector()
         win.present()
 
@@ -255,7 +292,7 @@ class BavarderApplication(Adw.Application):
         except AttributeError:
             pass
 
-    def ask(self, prompt, chat):
+    def ask(self, prompt, chat, stream=False, callback=None):
         if self.local_mode:
             if not self.setup_chat(): # NO MODELS:
                 return _("Please download a model from Preferences by clicking on the Dot Menu at the top!")
@@ -282,7 +319,16 @@ class BavarderApplication(Adw.Application):
 
             for p in l:
                 if p.enabled and p.slug == self.current_provider:
-                    response = self.providers[self.current_provider].ask(prompt, chat)
+                    if stream and callback:
+                        # Use streaming if supported
+                        if hasattr(self.providers[self.current_provider], 'ask_stream'):
+                            response = self.providers[self.current_provider].ask_stream(prompt, chat, callback)
+                        else:
+                            response = self.providers[self.current_provider].ask(prompt, chat)
+                            if callback and response:
+                                callback(response)
+                    else:
+                        response = self.providers[self.current_provider].ask(prompt, chat)
                     break
                 else:
                     response = _("Please enable a provider from the Dot Menu")

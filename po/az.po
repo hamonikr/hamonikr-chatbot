@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 14:46+0100\n"
+"POT-Creation-Date: 2025-08-12 13:17+0900\n"
 "PO-Revision-Date: 2024-08-08 16:18+0000\n"
 "Last-Translator: Weblate Translation Memory <noreply-mt-weblate-translation-"
 "memory@weblate.org>\n"
@@ -24,10 +24,50 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 5.6.2\n"
 
-#: data/io.github.Bavarder.Bavarder.desktop.in.in:3 src/views/window.blp:6
-#: src/views/window.blp:26 src/views/window.blp:62 src/views/window.blp:168
-msgid "Bavarder"
-msgstr "Bavarder"
+#: data/io.github.Bavarder.Bavarder.desktop.in.in:3
+msgid "HamoniKR Chatbot"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr "Ümumi"
+
+#: src/gtk/help-overlay.blp:14
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "Qısayolları göstərin"
+
+#: src/gtk/help-overlay.blp:19
+msgctxt "shortcut window"
+msgid "Preferences"
+msgstr "Üstünlüklər"
+
+#: src/gtk/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr "Çıx"
+
+#: src/gtk/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Close current window"
+msgstr "Cari pəncərəni bağla"
+
+#: src/gtk/help-overlay.blp:34
+msgctxt "shortcut window"
+msgid "Ask"
+msgstr "Soruş"
+
+#: src/gtk/help-overlay.blp:39
+msgctxt "shortcut window"
+msgid "Cancel Generation"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:44
+#, fuzzy
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "Yeni Pəncərə"
 
 #: src/providers/base.py:8
 msgid "Image"
@@ -55,7 +95,6 @@ msgstr "Tokeni necə əldə etmək olar"
 
 #: src/providers/catgpt.py:7
 #, fuzzy
-#| msgid "Chit-chat with an AI"
 msgid "Chit-Chat with a Cat"
 msgstr "Chit AI ilə söhbət edin"
 
@@ -79,13 +118,15 @@ msgstr "API Açarı"
 msgid "No preferences available"
 msgstr "Heç bir tərcih yoxdur"
 
+#. TRANSLATORS: This is a place to put your credits (formats:
+#. "Name https://example.com" or "Name <email@example.com>",
+#. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
 msgstr "Mehrab Poladov | thepoladov@protonmail.com"
 
 #: src/views/about_window.py:42
 #, fuzzy
-#| msgid "Chit-chat with an AI"
 msgid "Chit-Chat with AI"
 msgstr "Chit AI ilə söhbət edin"
 
@@ -114,37 +155,26 @@ msgstr ""
 msgid "Export"
 msgstr "Ver"
 
-#: src/views/preferences_window.py:53 src/views/preferences_window.blp:11
-#: src/views/preferences_window.blp:19 src/views/window.py:313
-#, fuzzy
-#| msgid "Model"
-msgid "Models"
-msgstr "Model"
-
-#: src/views/preferences_window.py:60
-msgid "List of available models"
-msgstr ""
-
-#: src/views/preferences_window.py:72
+#: src/views/preferences_window.py:51
 msgid "Delete All Threads"
 msgstr ""
 
-#: src/views/preferences_window.py:73
+#: src/views/preferences_window.py:52
 msgid "Are you sure you want to delete all threads? This can't be undone!"
 msgstr ""
 
-#: src/views/preferences_window.py:77 src/views/save_dialog.blp:7
+#: src/views/preferences_window.py:56 src/views/save_dialog.blp:7
 #: src/views/window.py:219 src/views/window.py:384 src/widgets/item.py:240
 #: src/widgets/thread_item.py:86 src/widgets/thread_item.py:126
 msgid "Cancel"
 msgstr "Ləğv et"
 
-#: src/views/preferences_window.py:78 src/views/window.py:220
+#: src/views/preferences_window.py:57 src/views/window.py:220
 #: src/widgets/thread_item.blp:28 src/widgets/thread_item.py:127
 msgid "Delete"
 msgstr "Silmək"
 
-#: src/views/preferences_window.py:93 src/views/window.py:245
+#: src/views/preferences_window.py:72 src/views/window.py:245
 msgid "All chats cleared!"
 msgstr ""
 
@@ -152,6 +182,12 @@ msgstr ""
 #: src/views/window.py:278 src/views/window.py:316 src/views/window.blp:299
 msgid "Preferences"
 msgstr "Üstünlüklər"
+
+#: src/views/preferences_window.blp:11 src/views/preferences_window.blp:19
+#: src/views/window.py:313
+#, fuzzy
+msgid "Models"
+msgstr "Model"
 
 #: src/views/preferences_window.blp:15 src/views/window.py:275
 msgid "Providers"
@@ -163,15 +199,11 @@ msgstr ""
 
 #: src/views/preferences_window.blp:31
 #, fuzzy
-#| msgctxt "shortcut window"
-#| msgid "Clear"
 msgid "Clear all threads"
 msgstr "Təmizlə"
 
 #: src/views/preferences_window.blp:35
 #, fuzzy
-#| msgctxt "shortcut window"
-#| msgid "Clear"
 msgid "Clear"
 msgstr "Təmizlə"
 
@@ -247,8 +279,6 @@ msgstr ""
 
 #: src/views/window.py:283 src/views/window.py:321
 #, fuzzy
-#| msgctxt "shortcut window"
-#| msgid "Clear"
 msgid "Clear all"
 msgstr "Təmizlə"
 
@@ -263,6 +293,11 @@ msgstr ""
 #: src/views/window.py:451
 msgid "human"
 msgstr ""
+
+#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
+#: src/views/window.blp:168
+msgid "Bavarder"
+msgstr "Bavarder"
 
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
@@ -287,7 +322,6 @@ msgstr "Mesaj"
 
 #: src/views/window.blp:156
 #, fuzzy
-#| msgid "Message"
 msgid "No Messages"
 msgstr "Mesaj"
 
@@ -359,13 +393,11 @@ msgstr ""
 
 #: src/widgets/item.py:235
 #, fuzzy
-#| msgid "Message"
 msgid "Save message"
 msgstr "Mesaj"
 
 #: src/widgets/item.py:251
 #, fuzzy
-#| msgid "Message"
 msgid "Message copied"
 msgstr "Mesaj"
 
@@ -440,7 +472,6 @@ msgstr ""
 
 #: src/widgets/model_item.blp:117
 #, fuzzy
-#| msgid "Prompt"
 msgid "System Prompt"
 msgstr "Sorğu"
 
@@ -474,17 +505,18 @@ msgstr ""
 msgid "Thread Deleted"
 msgstr ""
 
-#: src/main.py:261
+#. NO MODELS:
+#: src/main.py:260
 msgid ""
 "Please download a model from Preferences by clicking on the Dot Menu at the "
 "top!"
 msgstr ""
 
-#: src/main.py:265
+#: src/main.py:264
 msgid "Hello, I am Bavarder, a Chit-Chat AI"
 msgstr ""
 
-#: src/main.py:288
+#: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr ""
 
@@ -576,35 +608,12 @@ msgstr ""
 #~ msgid "New version available!"
 #~ msgstr "Yeni versiya mövcuddur!"
 
-#~ msgid "New Window"
-#~ msgstr "Yeni Pəncərə"
-
 #~ msgid "Wait"
 #~ msgstr "Gözləyin"
 
 #~ msgctxt "shortcut window"
-#~ msgid "General"
-#~ msgstr "Ümumi"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Show Shortcuts"
-#~ msgstr "Qısayolları göstərin"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Ask"
-#~ msgstr "Soruş"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Close current window"
-#~ msgstr "Cari pəncərəni bağla"
-
-#~ msgctxt "shortcut window"
 #~ msgid "Close all windows"
 #~ msgstr "Bütün pəncərələri bağla"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Preferences"
-#~ msgstr "Üstünlüklər"
 
 #~ msgctxt "shortcut window"
 #~ msgid "Copy response"
@@ -640,10 +649,6 @@ msgstr ""
 #~| msgid "Keyboard Shortcuts"
 #~ msgid "Add more keyboard shortcuts"
 #~ msgstr "Klaviatura Qısayolları"
-
-#~ msgctxt "shortcut window"
-#~ msgid "Quit"
-#~ msgstr "Çıx"
 
 #~ msgid "Special thanks to"
 #~ msgstr "Xüsusi təşəkkürlər"

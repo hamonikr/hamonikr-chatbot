@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-02-25 14:46+0100\n"
+"POT-Creation-Date: 2025-08-12 13:17+0900\n"
 "PO-Revision-Date: 2024-04-29 13:18+0000\n"
 "Last-Translator: \"K.B.Dharun Krishna\" <kbdharun@users.noreply.translate."
 "codeberg.org>\n"
@@ -23,10 +23,53 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Generator: Weblate 5.5.2\n"
 
-#: data/io.github.Bavarder.Bavarder.desktop.in.in:3 src/views/window.blp:6
-#: src/views/window.blp:26 src/views/window.blp:62 src/views/window.blp:168
-msgid "Bavarder"
-msgstr "பவார்டர்"
+#: data/io.github.Bavarder.Bavarder.desktop.in.in:3
+msgid "HamoniKR Chatbot"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:11
+msgctxt "shortcut window"
+msgid "General"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:14
+#, fuzzy
+msgctxt "shortcut window"
+msgid "Show Shortcuts"
+msgstr "விசைப்பலகை குறுக்குவழிகள்"
+
+#: src/gtk/help-overlay.blp:19
+#, fuzzy
+msgctxt "shortcut window"
+msgid "Preferences"
+msgstr "விருப்பத்தேர்வுகள்"
+
+#: src/gtk/help-overlay.blp:24
+msgctxt "shortcut window"
+msgid "Quit"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:29
+msgctxt "shortcut window"
+msgid "Close current window"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:34
+#, fuzzy
+msgctxt "shortcut window"
+msgid "Ask"
+msgstr "கேள்"
+
+#: src/gtk/help-overlay.blp:39
+msgctxt "shortcut window"
+msgid "Cancel Generation"
+msgstr ""
+
+#: src/gtk/help-overlay.blp:44
+#, fuzzy
+msgctxt "shortcut window"
+msgid "New Window"
+msgstr "புதிய சாளரம்"
 
 #: src/providers/base.py:8
 msgid "Image"
@@ -79,6 +122,9 @@ msgstr "API விசை"
 msgid "No preferences available"
 msgstr "விருப்பத்தேர்வுகள் இல்லை"
 
+#. TRANSLATORS: This is a place to put your credits (formats:
+#. "Name https://example.com" or "Name <email@example.com>",
+#. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
 msgstr "K.B.Dharun Krishna https://github.com/kbdharun"
@@ -112,36 +158,27 @@ msgstr "மூடு"
 msgid "Export"
 msgstr "ஏற்றுமதி"
 
-#: src/views/preferences_window.py:53 src/views/preferences_window.blp:11
-#: src/views/preferences_window.blp:19 src/views/window.py:313
-msgid "Models"
-msgstr "மாதிரிகள்"
-
-#: src/views/preferences_window.py:60
-msgid "List of available models"
-msgstr "கிடைக்கக்கூடிய மாதிரிகளின் பட்டியல்"
-
-#: src/views/preferences_window.py:72
+#: src/views/preferences_window.py:51
 msgid "Delete All Threads"
 msgstr "அனைத்து தொடரிழைகளும் நீக்கு"
 
-#: src/views/preferences_window.py:73
+#: src/views/preferences_window.py:52
 msgid "Are you sure you want to delete all threads? This can't be undone!"
 msgstr ""
 "எல்லா தொடரிழைகளையும் நிச்சயமாக நீக்க விரும்புகிறீர்களா? இதை செயல்தவிர்க்க முடியாது!"
 
-#: src/views/preferences_window.py:77 src/views/save_dialog.blp:7
+#: src/views/preferences_window.py:56 src/views/save_dialog.blp:7
 #: src/views/window.py:219 src/views/window.py:384 src/widgets/item.py:240
 #: src/widgets/thread_item.py:86 src/widgets/thread_item.py:126
 msgid "Cancel"
 msgstr "ரத்துசெய்"
 
-#: src/views/preferences_window.py:78 src/views/window.py:220
+#: src/views/preferences_window.py:57 src/views/window.py:220
 #: src/widgets/thread_item.blp:28 src/widgets/thread_item.py:127
 msgid "Delete"
 msgstr "நீக்கு"
 
-#: src/views/preferences_window.py:93 src/views/window.py:245
+#: src/views/preferences_window.py:72 src/views/window.py:245
 msgid "All chats cleared!"
 msgstr "அனைத்து உரையாடல்களும் அழிக்கப்பட்டன!"
 
@@ -149,6 +186,11 @@ msgstr "அனைத்து உரையாடல்களும் அழி�
 #: src/views/window.py:278 src/views/window.py:316 src/views/window.blp:299
 msgid "Preferences"
 msgstr "விருப்பத்தேர்வுகள்"
+
+#: src/views/preferences_window.blp:11 src/views/preferences_window.blp:19
+#: src/views/window.py:313
+msgid "Models"
+msgstr "மாதிரிகள்"
 
 #: src/views/preferences_window.blp:15 src/views/window.py:275
 msgid "Providers"
@@ -253,6 +295,11 @@ msgstr "மன்னிக்கவும், எனக்கு என்ன �
 #: src/views/window.py:451
 msgid "human"
 msgstr "மனிதன்"
+
+#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
+#: src/views/window.blp:168
+msgid "Bavarder"
+msgstr "பவார்டர்"
 
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
@@ -469,20 +516,24 @@ msgstr "இந்த தொடரிழையை நிச்சயமாக ந
 msgid "Thread Deleted"
 msgstr "தொடரிழை நீக்கப்பட்டது"
 
-#: src/main.py:261
+#. NO MODELS:
+#: src/main.py:260
 msgid ""
 "Please download a model from Preferences by clicking on the Dot Menu at the "
 "top!"
 msgstr ""
 "மேலே உள்ள புள்ளி பட்டியலை தொடுவதன் மூலம் விருப்பங்களிலிருந்து மாதிரியைப் பதிவிறக்கவும்!"
 
-#: src/main.py:265
+#: src/main.py:264
 msgid "Hello, I am Bavarder, a Chit-Chat AI"
 msgstr "வணக்கம், நான் பவார்டர், ஒரு சிட்-சாட் AI"
 
-#: src/main.py:288
+#: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr "புள்ளி பட்டியலில் இருந்து வழங்குநரை இயக்கவும்"
+
+#~ msgid "List of available models"
+#~ msgstr "கிடைக்கக்கூடிய மாதிரிகளின் பட்டியல்"
 
 #~ msgid "Export Thread ?"
 #~ msgstr "ஏற்றுமதி தொடரிழை ?"
@@ -593,9 +644,6 @@ msgstr "புள்ளி பட்டியலில் இருந்து 
 
 #~ msgid "New version available!"
 #~ msgstr "புதிய பதிப்பு உள்ளது!"
-
-#~ msgid "New Window"
-#~ msgstr "புதிய சாளரம்"
 
 #~ msgid "Wait"
 #~ msgstr "காத்திரு"
