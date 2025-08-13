@@ -60,4 +60,10 @@ if compile_schemas.found()
   )
 endif
 
+# Install requirements.txt for virtual environment management
+install_data(
+  '../requirements.txt',
+  install_dir: PKGDATA_DIR
+)
+
 subdir('icons')
