@@ -21,6 +21,8 @@ import sys
 import gi
 import time
 import os
+import subprocess
+import inspect
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
@@ -39,6 +41,32 @@ from .constants import app_id
 from .providers import PROVIDERS
 
 import json
+
+
+def get_clipboard_content():
+    """Return clipboard text using xclip or xsel if available, else None.
+    Tries up to 3 times with short delays to accommodate clipboard readiness.
+    """
+    for attempt in range(3):
+        try:
+            content = subprocess.check_output(
+                ['xclip', '-selection', 'clipboard', '-o'], text=True
+            )
+            if content.strip() != "":
+                return content
+        except Exception:
+            time.sleep(1)
+
+        try:
+            content = subprocess.check_output(
+                ['xsel', '--clipboard', '--output'], text=True
+            )
+            if content.strip() != "":
+                return content
+        except Exception:
+            time.sleep(1)
+
+    return None
 
 user_config_dir = os.environ.get(
     "XDG_CONFIG_HOME", os.environ["HOME"] + "/.config"
@@ -65,7 +93,7 @@ class BavarderApplication(Adw.Application):
 
     def __init__(self):
         super().__init__(application_id=app_id,
-                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
+                         flags=Gio.ApplicationFlags.DEFAULT_FLAGS | Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
         self.create_action("quit", self.on_quit, ["<primary>q"])
         self.create_action("close", self.on_close, ["<primary>w"])
         self.create_action('about', self.on_about_action)
@@ -74,6 +102,33 @@ class BavarderApplication(Adw.Application):
         # 키 입력은 위젯 단에서 처리(Enter=전송, Ctrl/Shift+Enter=줄바꿈)
         self.create_action('ask', self.on_ask)
         self.create_action('new_window', self.on_new_window, ["<primary><shift>n"])
+
+        # CLI 옵션: -p/--prompt 초기 프롬프트 지원
+        try:
+            self.add_main_option(
+                "prompt",
+                ord('p'),
+                GLib.OptionFlags.NONE,
+                GLib.OptionArg.STRING,
+                _("Initial prompt to send on startup"),
+                _("PROMPT")
+            )
+            # CLI 옵션: -c/--clipboard 클립보드 내용을 프롬프트로 사용
+            self.add_main_option(
+                "clipboard",
+                ord('c'),
+                GLib.OptionFlags.NONE,
+                GLib.OptionArg.NONE,
+                _("Use clipboard content as prompt"),
+                None
+            )
+        except Exception:
+            # 일부 환경에서 중복 등록 등을 무시
+            pass
+
+        self.initial_prompt = None
+        self.initial_prompt_from_clipboard = False
+        self.initial_system_injection = None
 
         self.data_path = os.path.join(user_data_dir, "hamonikr-chatbot")
 
@@ -261,6 +316,10 @@ class BavarderApplication(Adw.Application):
         """
         self.new_window()
 
+        # 창이 처음 생성될 때 CLI 프롬프트가 있으면 전송 예약
+        if getattr(self, "initial_prompt", None):
+            GLib.idle_add(self._send_initial_prompt)
+
     @property
     def win(self):
         """The application's main window."""
@@ -337,6 +396,96 @@ class BavarderApplication(Adw.Application):
         except AttributeError:
             pass
 
+    def do_command_line(self, command_line):
+        """Handle CLI options like -p/--prompt for initial message."""
+        try:
+            options = command_line.get_options_dict()
+            v = options.lookup_value("prompt", GLib.VariantType.new('s'))
+            if v is not None:
+                try:
+                    self.initial_prompt = v.get_string()
+                except Exception:
+                    self.initial_prompt = None
+            # -c/--clipboard 처리 (명시적 -p가 없을 때만 사용)
+            if not self.initial_prompt:
+                c = options.lookup_value("clipboard", GLib.VariantType.new('b'))
+                if c is not None and c.get_boolean():
+                    clip = get_clipboard_content()
+                    if clip and clip.strip():
+                        self.initial_prompt = clip.strip()
+                        self.initial_prompt_from_clipboard = True
+                        # 시스템 프롬프트 동적 주입 텍스트
+                        self.initial_system_injection = (
+                            "다음 문장을 분석해주세요:\n"
+                            "1. 프로그램 소스코드인 경우: 코드에 대한 설명을 제공해주세요.\n"
+                            "2. 오류 메시지인 경우: \n"
+                            "    하모니카OS(우분투 커널 기반, 리눅스 민트의 시나몬 데스크톱 환경 포함)를 사용하는 질문자가 특정 문제를 제기한 상황입니다.\n\n"
+                            "    하모니카, 하모니카OS, HamoniKR, HamoniKR OS 등의 단어는 모두 하모니카OS를 의미합니다.\n"
+                            "    하모니카OS 는 linuxmint 를 기반으로, 한국 사용자들의 환경에 적합한 여러 프로그램을 추가하고 개작한 운영체제입니다.\n"
+                            "    하모니카 5.0은 linuxmint 20.1 Ulyssa 기반이며, Ubuntu 20.04 Focal 과 동일한 패키지입니다. 코드네임은 한라(Hanla) 입니다.\n"
+                            "    하모니카 6.0은 linuxmint 20.3 Una 기반이며, Ubuntu 20.4 Focal 과 동일한 패키지입니다. 코드네임은 금강(kumkang) 입니다.\n"
+                            "    하모니카 7.0은 linuxmint 21.2 Victoria 기반이며, Ubuntu 22.04 jammy 과 동일한 패키지입니다. 코드네임은 태백(taebaek) 입니다.\n"
+                            "    하모니카 8.0은 linuxmint 22 Wilma 기반이며, Ubuntu 24.04 Noble 과 동일한 패키지입니다. 코드네임은 백두(paektu) 입니다.\n\n"
+                            "    정보를 제공할 때 다음의 우선순위로 웹사이트에서 정보를 검색하여 답변에 포함합니다:\n"
+                            "    - 하모니카 매뉴얼 사이트 (버전별):\n"
+                            "    - https://docs.hamonikr.org/hamonikr\n"
+                            "    - https://docs.hamonikr.org/hamonikr-5.0\n"
+                            "    - https://docs.hamonikr.org/hamonikr-6.0\n"
+                            "    - https://docs.hamonikr.org/hamonikr-7.0\n"
+                            "    - https://docs.hamonikr.org/hamonikr-8.0\n"
+                            "    - 하모니카 커뮤니티 질의응답 게시글:\n"
+                            "    - https://hamonikr.org/hamoni_board\n"
+                            "    - 우분투와 리눅스 민트의 질의응답 사이트:\n"
+                            "    - https://askubuntu.com/\n"
+                            "    - https://forums.linuxmint.com/\n\n"
+                            "    a. 질문자가 제공한 정보가 충분하다면, 해당 문제를 해결하기 위한 구체적인 방법을 한글로 자세히 설명합니다. 반드시 사용한 정보의 출처를 명확하게 제공하세요.\n"
+                            "    b. 질문이 하모니카OS, 리눅스, 또는 시나몬 데스크톱 환경과 관련이 없거나, 제공된 정보로 정확한 출처를 명확하게 제시할 수 없는 경우에는 일반적인 응답을 해주세요.\n"
+                            "    c. 이 답변이 AI 가 작성한 것을 알려주고, 인공지능 답변을 그대로 사용하는 위험에 대해서 알려주세요.\n\n"
+                            "    주의사항: 코드를 설명하는 부분은 bash, python 등의 문구를 붙이지 말고 평문으로 출력해주세요.\n"
+                            "    주의사항: 강조를 위해 ** 으로 표시하는 부분은 평문으로 출력해주세요.\n"
+                            "    주의사항: 항상 친절하고 이해하기 쉬운 언어를 사용하여 답변하며, 하모니카OS, 리눅스 민트, 시나몬 데스크톱 환경과 관련된 문제 해결에 중점을 둡니다.\n"
+                            "    주의사항: 답변을 하기 전 전체 답변 내용을 검토해서, 제대로 구성되지 않은 문장이나, 문맥상 이상한 부분을 자연스럽게 수정하는 과정을 수행 후, 리눅스 전문가가 말하듯이 해주세요."
+                        )
+        except Exception:
+            self.initial_prompt = None
+
+        # 활성화 및 창 표시
+        self.activate()
+
+        # 이미 실행 중인 인스턴스에서도 즉시 전송 예약
+        if getattr(self, "initial_prompt", None):
+            GLib.idle_add(self._send_initial_prompt)
+
+        return 0
+
+    def _send_initial_prompt(self):
+        """Inject the CLI prompt into entry and trigger send once UI is ready."""
+        try:
+            prompt = (self.initial_prompt or "").strip()
+            self.initial_prompt = None
+            if not prompt:
+                return False
+            if not self.win:
+                return False
+            # -c 사용 시 시스템 텍스트를 프롬프트 앞에 결합
+            # -c 사용 시 시스템 프롬프트는 보이지 않게(시스템 롤) 주입하고, 사용자에겐 원문만 보이게 함
+            if self.initial_prompt_from_clipboard and self.initial_system_injection:
+                try:
+                    # 공급자에게 전달하기 위해 일시 시스템 프롬프트로 저장
+                    self.transient_system_prompt = self.initial_system_injection
+                except Exception:
+                    pass
+                visible_text = prompt
+            else:
+                visible_text = prompt
+            buf = self.win.message_entry.get_buffer()
+            buf.set_text(visible_text)
+            self.win.on_ask()
+        except Exception:
+            # 실패 시 한 번만 시도하고 종료
+            pass
+        return False
+
     def ask(self, prompt, chat, stream=False, callback=None):
         if self.local_mode:
             if not self.setup_chat(): # NO MODELS:
@@ -346,6 +495,11 @@ class BavarderApplication(Adw.Application):
                     if p.lower() in prompt.lower():
                         return _("Hello, I am HamoniKR Chatbot, a Chit-Chat AI")
                 system_template = f"""You are a helpful and friendly AI assistant with the name {self.bot_name}. The name of the user are {self.user_name}. Respond very concisely."""
+                try:
+                    if getattr(self, "transient_system_prompt", None):
+                        system_template = f"{self.transient_system_prompt}\n\n{system_template}"
+                except Exception:
+                    pass
                 with self.model.chat_session(self.model_settings.get("system_template", system_template)):
                     self.model.current_chat_session = chat["content"].copy()
                 response = self.model.generate(
@@ -364,16 +518,61 @@ class BavarderApplication(Adw.Application):
 
             for p in l:
                 if p.enabled and p.slug == self.current_provider:
+                    # One-off system prompt injection support
+                    sys_prompt = None
+                    try:
+                        sys_prompt = getattr(self, "transient_system_prompt", None)
+                    except Exception:
+                        sys_prompt = None
+                    # Clear after capturing to avoid leaking into next request
+                    try:
+                        self.transient_system_prompt = None
+                    except Exception:
+                        pass
+
+                    # Build a temporary chat payload if system prompt exists (do not mutate UI chat)
+                    chat_payload = chat
+                    try:
+                        if sys_prompt:
+                            chat_payload = {"content": list(chat["content"]) }
+                            chat_payload["content"].insert(0, {"role": "system", "content": sys_prompt})
+                    except Exception:
+                        chat_payload = chat
+
                     if stream and callback:
                         # Use streaming if supported
                         if hasattr(self.providers[self.current_provider], 'ask_stream'):
-                            response = self.providers[self.current_provider].ask_stream(prompt, chat, callback)
+                            # Try to pass system_prompt if supported
+                            try:
+                                sig = inspect.signature(self.providers[self.current_provider].ask_stream)
+                                if 'system_prompt' in sig.parameters and sys_prompt:
+                                    response = self.providers[self.current_provider].ask_stream(prompt, chat_payload, callback=callback, system_prompt=sys_prompt)
+                                else:
+                                    response = self.providers[self.current_provider].ask_stream(prompt, chat_payload, callback)
+                            except Exception:
+                                response = self.providers[self.current_provider].ask_stream(prompt, chat_payload, callback)
                         else:
-                            response = self.providers[self.current_provider].ask(prompt, chat)
+                            # Fallback to non-streaming ask
+                            try:
+                                sig = inspect.signature(self.providers[self.current_provider].ask)
+                                if 'system_prompt' in sig.parameters and sys_prompt:
+                                    response = self.providers[self.current_provider].ask(prompt, chat_payload, system_prompt=sys_prompt)
+                                else:
+                                    response = self.providers[self.current_provider].ask(prompt, chat_payload)
+                            except Exception:
+                                response = self.providers[self.current_provider].ask(prompt, chat_payload)
                             if callback and response:
                                 callback(response)
                     else:
-                        response = self.providers[self.current_provider].ask(prompt, chat)
+                        # Regular non-streaming path
+                        try:
+                            sig = inspect.signature(self.providers[self.current_provider].ask)
+                            if 'system_prompt' in sig.parameters and sys_prompt:
+                                response = self.providers[self.current_provider].ask(prompt, chat_payload, system_prompt=sys_prompt)
+                            else:
+                                response = self.providers[self.current_provider].ask(prompt, chat_payload)
+                        except Exception:
+                            response = self.providers[self.current_provider].ask(prompt, chat_payload)
                     break
                 else:
                     response = _("Please enable a provider from the Dot Menu")

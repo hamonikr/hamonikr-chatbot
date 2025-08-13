@@ -142,8 +142,8 @@ run_application() {
     # Set environment
     export PYTHONPATH="$PKGDATA_DIR:${PYTHONPATH:-}"
     
-    # Try to run the application
-    python3 << 'EOF'
+    # Try to run the application (pass through CLI args)
+    python3 - "$@" << 'EOF'
 import os
 import sys
 import signal
