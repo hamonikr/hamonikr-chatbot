@@ -1,3 +1,11 @@
+hamonikr-chatbot (1.1.1) unstable; urgency=medium
+
+  * Add Korean language
+  * Support Themes
+  * Update venv settings
+
+ -- HamoniKR <pkg@hamonikr.org>  Wed, 13 Aug 2025 16:19:13 +0900
+
 hamonikr-chatbot (1.1.0-1) unstable; urgency=medium
 
   * Initial release for Debian
