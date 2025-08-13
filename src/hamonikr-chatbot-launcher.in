@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# HamoniKR Chatbot Smart Launcher
-# This script automatically manages virtual environment and dependencies
+# HamoniKR Chatbot Production Launcher
+# This script is installed as /usr/bin/hamonikr-chatbot
 
 set -e
 
@@ -71,21 +71,18 @@ setup_venv() {
     print_status "Setting up virtual environment for HamoniKR Chatbot..."
     
     # Create venv directory if it doesn't exist
-    mkdir -p "$(dirname "$VENV_PATH")" 2>/dev/null || true
+    mkdir -p "$(dirname "$VENV_PATH")"
     
     # Remove existing venv if present
     [[ -d "$VENV_PATH" ]] && rm -rf "$VENV_PATH"
     
     # Create venv with system site packages (for GTK access)
-    if ! python3 -m venv --system-site-packages "$VENV_PATH" >/dev/null 2>&1; then
-        print_error "Failed to create virtual environment"
-        return 1
-    fi
+    python3 -m venv --system-site-packages "$VENV_PATH" >/dev/null 2>&1
     
     # Activate and install packages
     source "$VENV_PATH/bin/activate"
-    pip install --quiet --upgrade pip 2>/dev/null || true
-    pip install --quiet "openai>=1.12.0,<2.0.0" requests tqdm pillow babel packaging 2>/dev/null || true
+    pip install --quiet --upgrade pip
+    pip install --quiet "openai>=1.12.0,<2.0.0" requests tqdm pillow babel packaging
     
     print_status "Virtual environment ready"
 }
@@ -97,15 +94,10 @@ venv_valid() {
     source "$VENV_PATH/bin/activate" 2>/dev/null || return 1
     
     python -c "
-try:
-    import openai
-    version = openai.__version__
-    major, minor = map(int, version.split('.')[:2])
-    assert major == 1 and minor >= 12, f'OpenAI version {version} not compatible'
-    print('Virtual environment is valid')
-except Exception as e:
-    print(f'Virtual environment invalid: {e}', file=sys.stderr)
-    exit(1)
+import openai
+version = openai.__version__
+major, minor = map(int, version.split('.')[:2])
+assert major == 1 and minor >= 12, f'OpenAI version {version} not compatible'
 " 2>/dev/null || return 1
     
     return 0
@@ -127,13 +119,9 @@ setup_environment() {
     
     if [[ "$use_venv" == "true" ]]; then
         if ! venv_valid; then
-            if ! setup_venv; then
-                print_error "Failed to setup virtual environment, trying system packages"
-                return 1
-            fi
-        else
-            source "$VENV_PATH/bin/activate"
+            setup_venv
         fi
+        source "$VENV_PATH/bin/activate"
     fi
 }
 
@@ -161,24 +149,16 @@ locale.textdomain('hamonikr-chatbot')
 gettext.install('hamonikr-chatbot', localedir)
 
 if __name__ == '__main__':
-    try:
-        import gi
-        from gi.repository import Gio
-        
-        gresource_path = os.path.join(pkgdatadir, 'hamonikr-chatbot.gresource')
-        if os.path.exists(gresource_path):
-            resource = Gio.Resource.load(gresource_path)
-            resource._register()
-        else:
-            print("Warning: GResource file not found", file=sys.stderr)
+    import gi
 
-        from hamonikr_chatbot import main
-        sys.exit(main.main(VERSION))
-    except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    from gi.repository import Gio
+    gresource_path = os.path.join(pkgdatadir, 'hamonikr-chatbot.gresource')
+    if os.path.exists(gresource_path):
+        resource = Gio.Resource.load(gresource_path)
+        resource._register()
+
+    from hamonikr_chatbot import main
+    sys.exit(main.main(VERSION))
 EOF
 }
 
@@ -189,11 +169,8 @@ main() {
     export PKGDATA_DIR="$PKGDATA_DIR"
     export LOCALE_DIR="$LOCALEDIR"
     
-    # Setup environment (suppress output unless error)
-    if ! setup_environment >/dev/null 2>&1; then
-        # If venv setup fails, try without it
-        print_warning "Using system packages"
-    fi
+    # Setup environment
+    setup_environment >/dev/null 2>&1
     
     # Run application
     run_application "$@"

@@ -1,0 +1,299 @@
+#!/bin/bash
+
+# HamoniKR Chatbot Smart Launcher
+# This script automatically manages virtual environment and dependencies
+
+set -e
+
+# Configuration
+VENV_NAME="hamonikr-chatbot-venv"
+VENV_PATH="$HOME/.local/share/$VENV_NAME"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Determine if this is installed system-wide or running from source
+if [[ "$0" == */usr/bin/* ]] || [[ "$0" == */usr/local/bin/* ]]; then
+    # System installation
+    PKGDATA_DIR="/usr/share/hamonikr-chatbot"
+    LOCALEDIR="/usr/share/locale"
+    VERSION="@VERSION@"  # This will be replaced during package build
+    REQUIREMENTS_FILE="/usr/share/hamonikr-chatbot/requirements.txt"
+    IS_SYSTEM_INSTALL=true
+else
+    # Development/source installation
+    PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+    PKGDATA_DIR="$PROJECT_ROOT/src"
+    LOCALEDIR="/usr/share/locale"
+    VERSION="1.1.0-dev"
+    REQUIREMENTS_FILE="$PROJECT_ROOT/requirements.txt"
+    IS_SYSTEM_INSTALL=false
+fi
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+print_status() {
+    echo -e "${GREEN}[INFO]${NC} $1" >&2
+}
+
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1" >&2
+}
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+print_debug() {
+    if [[ "${DEBUG:-}" == "1" ]]; then
+        echo -e "${BLUE}[DEBUG]${NC} $1" >&2
+    fi
+}
+
+# Check if system has conflicting user packages
+check_conflicts() {
+    local conflicts_found=false
+    
+    # Check for problematic user-installed packages
+    if python3 -c "import sys; [print(p) for p in sys.path if '/.local/' in p and 'openai' in p]" 2>/dev/null | grep -q .; then
+        print_warning "Found user-installed OpenAI packages that might conflict"
+        conflicts_found=true
+    fi
+    
+    if pip3 list --user 2>/dev/null | grep -E "openai|httpx|anyio" >/dev/null 2>&1; then
+        print_warning "Found conflicting user packages:"
+        pip3 list --user 2>/dev/null | grep -E "openai|httpx|anyio" || true
+        conflicts_found=true
+    fi
+    
+    if [[ "$conflicts_found" == "true" ]]; then
+        print_warning "Consider running: pip3 uninstall openai httpx anyio"
+        print_status "Creating isolated virtual environment to avoid conflicts..."
+        return 1
+    fi
+    
+    return 0
+}
+
+# Check if virtual environment is needed
+needs_venv() {
+    # Always use venv if conflicts detected
+    if ! check_conflicts; then
+        return 0  # true - needs venv
+    fi
+    
+    # Check if system OpenAI version is compatible
+    local openai_version
+    if openai_version=$(python3 -c "import openai; print(openai.__version__)" 2>/dev/null); then
+        print_debug "System OpenAI version: $openai_version"
+        # Check if version is in compatible range (1.12.0 <= version < 2.0.0)
+        if python3 -c "
+import sys
+from packaging import version
+v = version.parse('$openai_version')
+min_v = version.parse('1.12.0')
+max_v = version.parse('2.0.0')
+sys.exit(0 if min_v <= v < max_v else 1)
+" 2>/dev/null; then
+            print_debug "System OpenAI version is compatible"
+            return 1  # false - doesn't need venv
+        else
+            print_warning "System OpenAI version ($openai_version) is not compatible"
+            return 0  # true - needs venv
+        fi
+    else
+        print_warning "OpenAI not available in system Python"
+        return 0  # true - needs venv
+    fi
+}
+
+# Create virtual environment if needed
+setup_venv() {
+    print_status "Setting up virtual environment..."
+    
+    # Remove existing venv if it exists
+    if [[ -d "$VENV_PATH" ]]; then
+        print_debug "Removing existing virtual environment"
+        rm -rf "$VENV_PATH"
+    fi
+    
+    # Create new venv with system site packages
+    print_debug "Creating virtual environment with system site packages"
+    python3 -m venv --system-site-packages "$VENV_PATH"
+    
+    # Activate venv
+    source "$VENV_PATH/bin/activate"
+    
+    # Upgrade pip
+    python -m pip install --upgrade pip >/dev/null 2>&1
+    
+    # Install/upgrade required packages
+    if [[ -f "$REQUIREMENTS_FILE" ]]; then
+        print_debug "Installing requirements from $REQUIREMENTS_FILE"
+        pip install -r "$REQUIREMENTS_FILE" >/dev/null 2>&1
+    else
+        print_debug "Installing basic requirements"
+        pip install "openai>=1.12.0,<2.0.0" >/dev/null 2>&1
+    fi
+    
+    print_status "Virtual environment ready"
+}
+
+# Check if virtual environment is valid
+check_venv() {
+    if [[ ! -d "$VENV_PATH" ]]; then
+        return 1
+    fi
+    
+    source "$VENV_PATH/bin/activate"
+    
+    # Check if OpenAI is available and compatible
+    if python -c "
+import openai
+from packaging import version
+v = version.parse(openai.__version__)
+min_v = version.parse('1.12.0')
+max_v = version.parse('2.0.0')
+assert min_v <= v < max_v, f'OpenAI version {v} not in range [{min_v}, {max_v})'
+print('Virtual environment is valid')
+" 2>/dev/null; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Activate virtual environment if needed
+activate_environment() {
+    if needs_venv; then
+        print_debug "Virtual environment required"
+        
+        if ! check_venv; then
+            setup_venv
+        else
+            print_debug "Using existing virtual environment"
+            source "$VENV_PATH/bin/activate"
+        fi
+    else
+        print_debug "Using system Python environment"
+    fi
+}
+
+# Set up Python environment
+setup_python_env() {
+    export PYTHONPATH="$PKGDATA_DIR:${PYTHONPATH:-}"
+    export VERSION="$VERSION"
+    export PKGDATA_DIR="$PKGDATA_DIR"
+    export LOCALE_DIR="$LOCALEDIR"
+    
+    print_debug "PYTHONPATH: $PYTHONPATH"
+    print_debug "VERSION: $VERSION"
+    print_debug "PKGDATA_DIR: $PKGDATA_DIR"
+}
+
+# Run the chatbot application
+run_chatbot() {
+    print_debug "Starting HamoniKR Chatbot..."
+    
+    # Create temporary main script
+    local temp_main="/tmp/hamonikr-chatbot-main-$$.py"
+    cat > "$temp_main" << EOF
+#!/usr/bin/env python3
+
+import os
+import sys
+import signal
+import locale
+import gettext
+
+VERSION = '$VERSION'
+pkgdatadir = '$PKGDATA_DIR'
+localedir = '$LOCALEDIR'
+
+sys.path.insert(1, pkgdatadir)
+signal.signal(signal.SIGINT, signal.SIG_DFL)
+locale.bindtextdomain('hamonikr-chatbot', localedir)
+locale.textdomain('hamonikr-chatbot')
+gettext.install('hamonikr-chatbot', localedir)
+
+if __name__ == '__main__':
+    import gi
+
+    from gi.repository import Gio
+    gresource_path = os.path.join(pkgdatadir, 'hamonikr-chatbot.gresource')
+    if os.path.exists(gresource_path):
+        resource = Gio.Resource.load(gresource_path)
+        resource._register()
+    else:
+        # For development, try to find gresource in different locations
+        possible_paths = [
+            os.path.join(pkgdatadir, '..', 'data', 'hamonikr-chatbot.gresource'),
+            '/usr/share/hamonikr-chatbot/hamonikr-chatbot.gresource'
+        ]
+        for path in possible_paths:
+            if os.path.exists(path):
+                resource = Gio.Resource.load(path)
+                resource._register()
+                break
+        else:
+            print("Warning: GResource file not found", file=sys.stderr)
+
+    try:
+        from hamonikr_chatbot import main
+        sys.exit(main.main(VERSION))
+    except ImportError as e:
+        print(f"Error importing hamonikr_chatbot module: {e}", file=sys.stderr)
+        print(f"PYTHONPATH: {sys.path}", file=sys.stderr)
+        sys.exit(1)
+EOF
+
+    # Run the application
+    python "$temp_main" "$@"
+    local exit_code=$?
+    
+    # Clean up
+    rm -f "$temp_main"
+    
+    return $exit_code
+}
+
+# Cleanup function
+cleanup() {
+    # Deactivate virtual environment if active
+    if command -v deactivate >/dev/null 2>&1; then
+        deactivate 2>/dev/null || true
+    fi
+}
+
+# Main function
+main() {
+    # Set trap for cleanup
+    trap cleanup EXIT
+    
+    # Parse debug flag
+    if [[ "${1:-}" == "--debug" ]]; then
+        export DEBUG=1
+        shift
+    fi
+    
+    print_debug "HamoniKR Chatbot Smart Launcher starting..."
+    print_debug "System install: $IS_SYSTEM_INSTALL"
+    print_debug "Package data dir: $PKGDATA_DIR"
+    
+    # Check dependencies and activate environment
+    activate_environment
+    
+    # Set up Python environment
+    setup_python_env
+    
+    # Run the application
+    run_chatbot "$@"
+}
+
+# Check if running as library or script
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
