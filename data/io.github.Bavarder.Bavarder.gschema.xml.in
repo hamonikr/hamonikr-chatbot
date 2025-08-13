@@ -28,6 +28,9 @@
 		<key name="is-fullscreen" type="b">
 			<default>false</default>
 		</key>
+		<key name="color-scheme" type="s">
+			<default>'system'</default>
+		</key>
 
 	</schema>
 </schemalist>

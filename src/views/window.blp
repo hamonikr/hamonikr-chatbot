@@ -34,6 +34,12 @@ template $BavarderWindow : Adw.ApplicationWindow {
               clicked => $on_new_chat_action();
             }
             [end]
+            MenuButton theme_button {
+              primary: false;
+              icon-name: "weather-clear-night-symbolic";
+              tooltip-text: _("Theme");
+              menu-model: theme-menu;
+            }
             MenuButton menu_button {
               primary: true;
               menu-model: main-menu;
@@ -292,5 +298,25 @@ menu main-menu {
   item {
     label: _("About HamoniKR Chatbot");
     action: "app.about";
+  }
+}
+
+menu theme-menu {
+  section {
+    item {
+      label: _("System Theme");
+      action: "app.set_color_scheme";
+      target: "system";
+    }
+    item {
+      label: _("Light Theme");
+      action: "app.set_color_scheme";
+      target: "light";
+    }
+    item {
+      label: _("Dark Theme");
+      action: "app.set_color_scheme";
+      target: "dark";
+    }
   }
 }

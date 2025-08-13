@@ -27,15 +27,13 @@ class CodeBlock(Gtk.Widget):
 
         self.buffer.set_text(self.command)
 
-        if Adw.StyleManager().get_dark():
-            self.buffer.set_style_scheme(GtkSource.StyleSchemeManager().get_scheme("Adwaita-dark"))
-        else:
-            self.buffer.set_style_scheme(GtkSource.StyleSchemeManager().get_scheme("Adwaita"))
+        self._apply_sourceview_scheme()
 
-        if Adw.StyleManager().get_dark():
-            self.output_buffer.set_style_scheme(GtkSource.StyleSchemeManager().get_scheme("Adwaita-dark"))
-        else:
-            self.output_buffer.set_style_scheme(GtkSource.StyleSchemeManager().get_scheme("Adwaita"))
+        # 테마 변경 시 즉시 반영
+        try:
+            Adw.StyleManager.get_default().connect("notify::dark", self._on_style_changed)
+        except Exception:
+            pass
         
 
     @Gtk.Template.Callback()
@@ -84,3 +82,16 @@ class CodeBlock(Gtk.Widget):
                     o += line + "\n"
 
         return o
+
+    def _apply_sourceview_scheme(self):
+        try:
+            is_dark = Adw.StyleManager().get_dark()
+        except Exception:
+            is_dark = False
+        scheme_id = "Adwaita-dark" if is_dark else "Adwaita"
+        mgr = GtkSource.StyleSchemeManager()
+        self.buffer.set_style_scheme(mgr.get_scheme(scheme_id))
+        self.output_buffer.set_style_scheme(mgr.get_scheme(scheme_id))
+
+    def _on_style_changed(self, *args):
+        self._apply_sourceview_scheme()

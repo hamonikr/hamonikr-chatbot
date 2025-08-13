@@ -25,11 +25,11 @@ class ExportDialog(Adw.MessageDialog):
 
         self.text = self.text[:-2]
         self.buffer.set_text(self.text)
-
-        if Adw.StyleManager().get_dark():
-            self.buffer.set_style_scheme(GtkSource.StyleSchemeManager().get_scheme("Adwaita-dark"))
-        else:
-            self.buffer.set_style_scheme(GtkSource.StyleSchemeManager().get_scheme("Adwaita"))
+        self._apply_sourceview_scheme()
+        try:
+            Adw.StyleManager.get_default().connect("notify::dark", self._on_style_changed)
+        except Exception:
+            pass
 
 
     @Gtk.Template.Callback()
@@ -42,3 +42,15 @@ class ExportDialog(Adw.MessageDialog):
             dialog = SaveDialog(self.parent, self.text)
             dialog.set_transient_for(self.parent)
             dialog.present()
+
+    def _apply_sourceview_scheme(self):
+        try:
+            is_dark = Adw.StyleManager().get_dark()
+        except Exception:
+            is_dark = False
+        scheme_id = "Adwaita-dark" if is_dark else "Adwaita"
+        mgr = GtkSource.StyleSchemeManager()
+        self.buffer.set_style_scheme(mgr.get_scheme(scheme_id))
+
+    def _on_style_changed(self, *args):
+        self._apply_sourceview_scheme()
