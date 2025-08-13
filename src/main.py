@@ -107,6 +107,12 @@ class BavarderApplication(Adw.Application):
         self.local_mode = self.settings.get_boolean("local-mode")
         self.current_provider = self.settings.get_string("current-provider")
         self.model_name = self.settings.get_string("model")
+        # 초기 테마 적용
+        try:
+            scheme = self.settings.get_string("color-scheme") or "system"
+        except Exception:
+            scheme = "system"
+        self.apply_color_scheme(scheme)
 
         self.create_stateful_action(
             "set_provider",
@@ -132,6 +138,41 @@ class BavarderApplication(Adw.Application):
 
         self.bot_name = self.settings.get_string("bot-name")
         self.user_name = self.settings.get_string("user-name")
+
+        # 테마 상태 액션 등록
+        self.create_stateful_action(
+            "set_color_scheme",
+            GLib.VariantType.new("s"),
+            GLib.Variant("s", scheme),
+            self.on_set_color_scheme_action
+        )
+
+    def apply_color_scheme(self, scheme: str):
+        try:
+            sm = Adw.StyleManager.get_default()
+            if scheme == "light":
+                sm.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
+            elif scheme == "dark":
+                sm.set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+            else:
+                sm.set_color_scheme(Adw.ColorScheme.DEFAULT)
+        except Exception:
+            pass
+
+    def on_set_color_scheme_action(self, action, param):
+        try:
+            scheme = param.get_string()
+        except Exception:
+            scheme = "system"
+        self.apply_color_scheme(scheme)
+        try:
+            self.settings.set_string("color-scheme", scheme)
+        except Exception:
+            pass
+        try:
+            Gio.SimpleAction.set_state(self.lookup_action("set_color_scheme"), GLib.Variant("s", scheme))
+        except Exception:
+            pass
 
 
     def on_set_provider_action(self, action, *args):
