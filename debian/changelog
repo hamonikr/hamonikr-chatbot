@@ -1,3 +1,13 @@
+hamonikr-chatbot (1.1.3) unstable; urgency=medium
+
+  * UI: 스트리밍 응답 표시 지원 (토큰/청크 단위 실시간 업데이트 후 완료 시 1회 재렌더)
+  * 버그 수정: 스트리밍 완료 후 Assistant 메시지가 중복 표시되던 문제 해결
+  * Ollama: 스트리밍 지원 추가 (stream=true, iter_lines 처리, ask_stream 제공)
+  * 기본 동작: UI에서 요청 시 스트리밍 모드를 사용하며, 미지원 프로바이더는 자동 폴백
+  * 기타: 자동 스크롤 안정화, 대화 제목은 첫 Assistant 응답에서만 자동 추론
+
+ -- HamoniKR <pkg@hamonikr.org>  Wed, 13 Aug 2025 18:20:00 +0900
+
 hamonikr-chatbot (1.1.2) unstable; urgency=medium
 
   * Add CLI option -p/--prompt to send an initial request and show response on startup
