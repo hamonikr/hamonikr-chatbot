@@ -18,51 +18,87 @@ class OllamaProvider(BaseProvider):
         self.base_url = self.data.get("base_url", "http://localhost:11434")
         self.model = self.data.get("model", "llama3.2")
     
-    def ask(self, prompt, chat):
+    def ask(self, prompt, chat, stream=False, callback=None, system_prompt=None):
         # Convert chat history to Ollama format
         messages = []
-        for c in chat["content"][:-1]:  # Exclude current prompt
-            if c["role"] == self.app.bot_name:
-                role = "assistant"
-            else:
-                role = "user"
-            messages.append({"role": role, "content": c["content"]})
-        
+        try:
+            for c in chat.get("content", [])[:-1]:  # Exclude current prompt
+                role = "assistant" if c.get("role") == self.app.bot_name else "user"
+                messages.append({"role": role, "content": c.get("content", "")})
+        except Exception:
+            pass
+
+        # Optional: prepend system prompt
+        if system_prompt:
+            messages.insert(0, {"role": "system", "content": system_prompt})
+
         # Add current prompt
         messages.append({"role": "user", "content": prompt})
-        
+
         headers = {
             "Content-Type": "application/json"
         }
-        
+
         data = {
             "model": self.model,
             "messages": messages,
-            "stream": False
+            "stream": bool(stream)
         }
-        
+
         try:
             response = requests.post(
                 f"{self.base_url}/api/chat",
                 headers=headers,
                 json=data,
-                timeout=60  # Longer timeout for local models
+                timeout=60,  # Longer timeout for local models
+                stream=bool(stream)
             )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return result["message"]["content"]
-            elif response.status_code == 404:
+
+            if response.status_code == 404:
                 return _(f"Model '{self.model}' not found. Please pull it first with: ollama pull {self.model}")
-            else:
+            if response.status_code != 200:
                 return _(f"Error: {response.status_code} - {response.text}")
-                
+
+            if stream and callback:
+                full_text = ""
+                for line in response.iter_lines():
+                    if not line:
+                        continue
+                    try:
+                        data_line = json.loads(line.decode("utf-8"))
+                    except Exception:
+                        continue
+                    # Typical streaming chunk contains {"message": {"role": "assistant", "content": "..."}, "done": false}
+                    msg = data_line.get("message") or {}
+                    chunk = msg.get("content") or ""
+                    if chunk:
+                        full_text += chunk
+                        try:
+                            callback(chunk)
+                        except Exception:
+                            # Don't break the stream on callback errors
+                            pass
+                    if data_line.get("done"):
+                        break
+                return full_text
+            else:
+                # Non-streaming: parse once
+                result = response.json()
+                try:
+                    return result["message"]["content"]
+                except Exception:
+                    return str(result)
+
         except requests.exceptions.ConnectionError:
             return _("Cannot connect to Ollama. Make sure Ollama is running (ollama serve).")
         except requests.exceptions.Timeout:
             return _("Request timed out. The model might be loading or processing.")
         except Exception as e:
             return _(f"Error: {str(e)}")
+
+    def ask_stream(self, prompt, chat, callback=None, system_prompt=None):
+        # Convenience wrapper to enable streaming
+        return self.ask(prompt, chat, stream=True, callback=callback, system_prompt=system_prompt)
     
     def get_available_models(self):
         try:

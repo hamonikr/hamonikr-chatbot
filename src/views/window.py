@@ -452,6 +452,76 @@ class BavarderWindow(Adw.ApplicationWindow):
 
         self.add_user_item(prompt)
 
+        # 스트리밍 표시를 위한 빈 어시스턴트 항목을 먼저 추가하고, 해당 위젯 라벨을 콜백에서 갱신한다
+        # 1) 데이터 모델에 비어있는 어시스턴트 메시지 추가
+        stream_item_dict = {
+            "role": self.app.bot_name,
+            "content": "",
+            "time": self.get_time(),
+            "model": "",
+        }
+        self.content.append(stream_item_dict)
+
+        # 2) UI 전체를 데이터 기반으로 재빌드하여 항목 추가(중복 방지)
+        self.threads_row_activated_cb()
+        self.scroll_down()
+
+        # 재빌드된 리스트에서 마지막 Row/Item을 찾아 스트리밍 업데이트 대상으로 삼는다
+        def get_last_row():
+            try:
+                last = None
+                row = self.main_list.get_first_child()
+                while row is not None:
+                    last = row
+                    row = row.get_next_sibling()
+                return last
+            except Exception:
+                return None
+
+        stream_item_row = get_last_row()
+        stream_item_widget = None
+        try:
+            if stream_item_row is not None:
+                stream_item_widget = stream_item_row.get_child()
+        except Exception:
+            stream_item_widget = None
+
+        # 3) 해당 항목의 마지막 라벨(일반 텍스트 표시용)을 찾아보관
+        #    초기에는 빈 라벨 하나가 생성되어 있을 가능성이 높다
+        def find_tail_label():
+            try:
+                last_child = stream_item_widget.content.get_last_child()
+                if isinstance(last_child, Gtk.Label):
+                    return last_child
+            except Exception:
+                pass
+            return None
+
+        tail_label = find_tail_label()
+        accumulated = {"text": ""}
+
+        def on_chunk(chunk_text: str):
+            # 워커 스레드 → UI 스레드로 안전하게 전달
+            def _update():
+                # 누적 텍스트 갱신
+                accumulated["text"] += chunk_text or ""
+                stream_item_dict["content"] = accumulated["text"]
+                # 가능한 한 가볍게 UI 업데이트: 한 개 라벨에 텍스트만 누적
+                nonlocal tail_label
+                if tail_label is None:
+                    tail_label = find_tail_label()
+                try:
+                    if tail_label is not None:
+                        # 마크업 해석 없이 안전하게 표시
+                        tail_label.set_use_markup(False)
+                        tail_label.set_text(accumulated["text"])
+                except Exception:
+                    pass
+                self.scroll_down()
+                return False
+
+            GLib.idle_add(_update)
+
         def thread_run():
             self.toast = Adw.Toast()
             self.toast.set_title(_("Generating response"))
@@ -459,29 +529,67 @@ class BavarderWindow(Adw.ApplicationWindow):
             self.toast.set_action_name("win.cancel")
             self.toast.set_timeout(0)
             self.toast_overlay.add_toast(self.toast)
-            response = self.app.ask(prompt, self.chat)
+
+            # 스트리밍 요청 시도. 공급자가 스트리밍을 지원하지 않으면 콜백이 한 번만 불린다
+            response = self.app.ask(prompt, self.chat, stream=True, callback=on_chunk)
+
             GLib.idle_add(cleanup, response, self.toast)
+
+        def _final_rerender_for_markdown(text: str):
+            # 스트림 종료 후 전체 리스트를 다시 렌더링하여 마크다운/코드블록을 적용
+            try:
+                self.threads_row_activated_cb()
+                self.scroll_down()
+            except Exception:
+                pass
 
         def cleanup(response, toast):
             try:
                 self.t.join()
                 self.toast.dismiss()
 
-                if not response:
-                    self.add_assistant_item(_("Sorry, I don't know what to say."))
-                else:
-                    if isinstance(response, str):
-                        self.add_assistant_item(response)
-                    else:
+                # response가 문자열이면(논-스트리밍 또는 폴백) 누적에 반영
+                if isinstance(response, str) and response:
+                    accumulated["text"] = response
+                    stream_item_dict["content"] = response
+                    # 최종 마크다운 렌더로 교체
+                    _final_rerender_for_markdown(response)
+                elif response is not None and not isinstance(response, str):
+                    # 이미지 등 바이너리 응답 처리(기존 동작 유지)
+                    try:
                         buffered = io.BytesIO()
                         response.save(buffered, format="JPEG")
-                        img_str = base64.b64encode(buffered.getvalue())
+                        img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+                        stream_item_dict["content"] = img_str
+                        _final_rerender_for_markdown(img_str)
+                    except Exception:
+                        # 실패 시 텍스트로 폴백
+                        if accumulated["text"]:
+                            _final_rerender_for_markdown(accumulated["text"])
+                        else:
+                            stream_item_dict["content"] = _("Sorry, I don't know what to say.")
+                            _final_rerender_for_markdown(stream_item_dict["content"])
+                else:
+                    # 스트리밍의 경우 콜백으로 이미 누적됨 → 마지막에 정식 렌더로 교체
+                    if accumulated["text"]:
+                        _final_rerender_for_markdown(accumulated["text"])
+                    else:
+                        # 아무 내용이 없다면 사과 메시지로 대체
+                        stream_item_dict["content"] = _("Sorry, I don't know what to say.")
+                        _final_rerender_for_markdown(stream_item_dict["content"])
 
-                        self.add_assistant_item(img_str.decode("utf-8"))
+                # 모델/타이틀 갱신 시도
+                try:
+                    if accumulated["text"]:
+                        self._maybe_update_chat_title_from_assistant(accumulated["text"])
+                except Exception:
+                    pass
 
             except AttributeError:
                 self.toast.dismiss()
-                self.add_assistant_item(_("Sorry, I don't know what to say."))
+                # 취소 등으로 실패 시에도 메시지를 정리
+                stream_item_dict["content"] = _("Sorry, I don't know what to say.")
+                _final_rerender_for_markdown(stream_item_dict["content"])
 
         self.t = KillableThread(target=thread_run)
         self.t.start()
