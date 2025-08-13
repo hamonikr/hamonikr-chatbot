@@ -3,6 +3,10 @@ hamonikr-chatbot (1.1.1) unstable; urgency=medium
   * Add Korean language
   * Support Themes
   * Update venv settings
+  *   * Update changelog for version 1.1.1
+  *   * Add color scheme support and theme menu
+  *   * Merge branch 'dev' of github.com:hamonikr/hamonikr-chatbot into
+    dev
 
  -- HamoniKR <pkg@hamonikr.org>  Wed, 13 Aug 2025 16:19:13 +0900
 
