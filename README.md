@@ -1,126 +1,62 @@
-<a href="https://bavarder.codeberg.page">
-<h1 align="center">
-  <img src="data/icons/hicolor/scalable/apps/io.github.Bavarder.Bavarder.svg" alt="Bavarder" width="192" height="192"/>
-  <br>
-  Bavarder
-</h1>
+<h1 align="center">HamoniKR Chatbot</h1>
+
+<p align="center"><strong>GTK4/Libadwaita 기반 AI 채팅 애플리케이션</strong></p>
+
+## 소개
+
+HamoniKR Chatbot은 업스트림 프로젝트인 Bavarder를 기반으로, HamoniKR 팀에서 한국 사용자 환경에 맞추어 배포하는 프로젝트입니다. 업스트림 소스는 다음을 참고하세요: [Bavarder/Bavarder](https://github.com/Bavarder/Bavarder).
+
+주요 변경 사항(요약):
+- 한국어 현지화 개선 및 기본 UX 한글화
+- 최신 AI 프로바이더 지원 추가/정비 (OpenAI, Hugging Face 등)
+- 설정 구조 리팩토링 및 내구성 강화
+- 대화 목록/타이틀 자동화 등 사용성 개선
+
+업스트림에 대한 감사와 저작권 고지는 앱의 “정보(About)” 창과 본 문서에 함께 표기됩니다.
+
+## 스크린샷
 
 <p align="center">
-  <strong>Chit-chat with an AI</strong>
-</p>
-</a>
-
-<p align="center">
-  <a href="https://flathub.org/apps/details/io.github.Bavarder.Bavarder">
-    <img width="200" alt="Download on Flathub" src="https://dl.flathub.org/assets/badges/flathub-badge-i-en.svg"/>
-  </a>
-  <br>
+  <img src="docs/hamonikr-chatbot.png" alt="HamoniKR Chatbot Screenshot" />
+  <br/>
+  <sub>실행 화면 예시</sub>
+  
 </p>
 
-<br>
+## 설치
 
-<p align="center">
-   <a href="https://translate.codeberg.org/engage/bavarder/">
-    <img src="https://translate.codeberg.org/widgets/bavarder/-/svg-badge.svg" alt="Translation status" />
-  </a>
-  <a href="https://repology.org/project/bavarder/versions">
-    <img alt="Packaging status" src="https://repology.org/badge/tiny-repos/bavarder.svg">
-  </a>
-  <a href="https://snapcraft.io/bavarder">
-    <img alt="bavarder" src="https://snapcraft.io/bavarder/badge.svg" />
-  </a>
-</p>
+### 소스에서 빌드(Meson)
 
-<p align="center">
-  <a href="https://stopthemingmy.app">
-    <img alt="Please do not theme this app" src="https://stopthemingmy.app/badge.svg"/>
-  </a>
-</p>
-
-<a href="https://bavarder.codeberg.page">
-<p align="center">
-  <img src="./data/screenshots/preview.png" alt="Preview"/>
-</p>
-</a>
-
-## Usage
-
-Documentation is available [here](https://bavarder.codeberg.page)
-
-## Installation
-
-### Flatpak
-
-You can either use your GNOME Software and search for "Bavarder" or you can run
-
-``` shell
-flatpak install io.github.Bavarder.Bavarder
-```
-
-### Latest
-
-You can download a flatpak from the latest commit [here](https://codeberg.org/Bavarder/-/packages/generic/bavarder/). Run
-
-``` shell
-curl -s -o bavarder.flatpak https://codeberg.org/api/packages/Bavarder/generic/Bavarder/164/bavarder.flatpak && flatpak install --user bavarder.flatpak -y 
-```
-
-#### From Source
-
-### Flatpak-builder
-
-Clone the repo and run `flatpak-builder`
-
-``` shell
-git clone https://codeberg.org/Bavarder/Bavarder # or https://github.com/Bavarder/Bavarder
-cd Bavarder
-flatpak-builder --install --user --force-clean repo/ build-aux/flatpak/io.github.Bavarder.Bavarder.json
-```
-### Meson
-
-``` shell 
-git clone https://codeberg.org/Bavarder/Bavarder # or https://github.com/Bavarder/Bavarder
-cd Bavarder
-meson setup build # Configure the build environment in subdirectory 'build'
+```bash
+git clone https://github.com/hamonikr/hamonikr-chatbot
+cd hamonikr-chatbot
+meson setup build
 meson compile -C build
-meson check -C build
 meson install -C build
-chmod 0755 /usr/local/bin/bavarder # Fix binary permissions
 ```
 
-### Others
 
-You can see more install methods on the [website](https://bavarder.codeberg.page/install/)
 
-## Contribute
+## 사용법
 
-The [GNOME Code of Conduct](https://wiki.gnome.org/Foundation/CodeOfConduct) is applicable to this project
+설치 후 앱을 실행하여 프로바이더와 모델을 선택하고 대화를 시작하세요. 일부 프로바이더는 API 키 설정이 필요할 수 있습니다.
 
-See [`SEEN.md`](./SEEN.md) for a list of articles and posts about Bavarder
+## 이슈 및 지원
 
-### Translate
+문제 제기, 기능 제안은 GitHub 이슈를 이용해 주세요.
 
-<a href="https://translate.codeberg.org/engage/bavarder/">
-    <img src="https://translate.codeberg.org/widgets/bavarder/-/multi-auto.svg" alt="Translation status" />
-</a>
+- 프로젝트 홈/이슈: https://github.com/hamonikr/hamonikr-chatbot
 
-You can translate Bavarder using [Codeberg Translate](https://translate.codeberg.org/engage/bavarder/)
+## 기여
 
-## Mirrors
+포크 후 변경점을 PR로 보내주세요. 코딩 규칙, 커밋 메시지 스타일 등은 일반적인 오픈소스 관례를 따릅니다. PR에는 변경 이유와 테스트 방법을 간단히 포함해 주세요. 
 
-- [GitHub](https://github.com/Bavarder/Bavarder)
-- [GitLab](https://gitlab.com/Bavarder/Bavarder)
-- [Codeberg](https://codeberg.org/Bavarder/Bavarder)
+## 라이선스
 
-## About the name
+GPL-3.0-or-later. 세부 사항은 `COPYING` 파일을 참고하세요.
 
-Bavarder is a french word, the definiton of Bavarder is "Parler abondamment de choses sans grande portée" (Talking a lot about things that don't matter) (Larousse) which can be translated by Chit-Chat (informal conversation about matters that are not important). For non-french speakers, Bavarder can be hard to speak, it's prounouced as [bavaʀde]. Hear [here](https://youtu.be/9Qoogwxo5YA)
+## 업스트림/크레딧
 
-## See also 
+- 업스트림: [Bavarder/Bavarder](https://github.com/Bavarder/Bavarder)
+- HamoniKR 유지보수: https://github.com/hamonikr/hamonikr-chatbot
 
-### [Imaginer : Imagine with AI](https://imaginer.codeberg.page)
-
-A tool for generating pictures with AI (GNOME app)
-
-- [GitHub](https://github.com/ImaginerApp/Imaginer)
-- [Codeberg](https://codeberg.org/Imaginer/Imaginer)

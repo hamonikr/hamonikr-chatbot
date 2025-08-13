@@ -92,11 +92,9 @@ msgstr "고양이와 수다떨기"
 #: src/providers/hfbasechat.py:45
 msgid ""
 "You've reached the rate limit! Please add a token to the preferences. You "
-"can get the token by following this [guide](https://bavarder.codeberg.page/"
-"help/huggingface/)"
+"can get the token by following this [guide](https://github.com/hamonikr/hamonikr-chatbot)"
 msgstr ""
-"사용량 한도에 도달했습니다! 환경설정에 토큰을 추가해주세요. [가이드](https://"
-"bavarder.codeberg.page/help/huggingface/)를 따라 토큰을 얻을 수 있습니다."
+"사용량 한도에 도달했습니다! 환경설정에 토큰을 추가해주세요. [가이드](https://github.com/hamonikr/hamonikr-chatbot) 를 따라 토큰을 얻을 수 있습니다."
 
 #: src/providers/hfbasechat.py:50
 #, python-brace-format
@@ -116,15 +114,15 @@ msgstr "사용 가능한 환경설정이 없습니다"
 #. no quotes) and is not meant to be translated literally.
 #: src/views/about_window.py:12
 msgid "translator-credits"
-msgstr "HamoniKR <info@hamonikr.org>"
+msgstr "HamoniKR <chaeya@gmail.com>"
 
 #: src/views/about_window.py:42
 msgid "Chit-Chat with AI"
 msgstr "AI와 대화하기"
 
 #: src/views/about_window.py:44
-msgid "Copyright © 2023 0xMRTT"
-msgstr "Copyright © 2023 0xMRTT"
+msgid "Copyright © 2025 HamoniKR"
+msgstr "Copyright © 2025 HamoniKR"
 
 #: src/views/about_window.py:51
 msgid "Packaging"
@@ -283,11 +281,6 @@ msgstr "죄송합니다. 무엇을 말해야 할지 모르겠습니다."
 msgid "human"
 msgstr "사용자"
 
-#: src/views/window.blp:6 src/views/window.blp:26 src/views/window.blp:62
-#: src/views/window.blp:168
-msgid "Bavarder"
-msgstr "하모니카 챗봇"
-
 #: src/views/window.blp:33 src/views/window.blp:78 src/views/window.blp:79
 #: src/views/window.blp:184 src/views/window.blp:185
 msgid "New Chat"
@@ -334,7 +327,7 @@ msgid "Keyboard Shortcuts"
 msgstr "키보드 단축키"
 
 #: src/views/window.blp:309
-msgid "About Bavarder"
+msgid "About HamoniKR Chatbot"
 msgstr "하모니카 챗봇 정보"
 
 #: src/widgets/code_block.py:63 src/widgets/code_block.py:82
@@ -504,7 +497,7 @@ msgid ""
 msgstr "상단의 점 메뉴를 클릭하여 환경설정에서 모델을 다운로드해주세요!"
 
 #: src/main.py:264
-msgid "Hello, I am Bavarder, a Chit-Chat AI"
+msgid "Hello, I am HamoniKR Chatbot, a Chit-Chat AI"
 msgstr "안녕하세요, 저는 대화하는 AI, 하모니카 챗봇입니다"
 
 #: src/main.py:287

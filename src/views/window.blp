@@ -3,7 +3,7 @@ using Adw 1;
 
 template $BavarderWindow : Adw.ApplicationWindow {
 
-  title: _("Bavarder");
+  title: _("HamoniKR Chatbot");
   default-width: 800;
   default-height: 600;
   width-request: 360;
@@ -23,7 +23,7 @@ template $BavarderWindow : Adw.ApplicationWindow {
       max-sidebar-width: 260;
       sidebar-width-fraction: 0.38;
       sidebar: Adw.NavigationPage {
-        title: _("Bavarder");
+        title: _("HamoniKR Chatbot");
         child: Adw.ToolbarView {
           [top]
           Adw.HeaderBar {
@@ -58,8 +58,8 @@ template $BavarderWindow : Adw.ApplicationWindow {
               }
 
               Adw.StatusPage status_no_thread {
-                icon-name: "io.github.Bavarder.Bavarder";
-                title: _("Bavarder");
+                icon-name: "org.hamonikr.Chatbot";
+                title: _("HamoniKR Chatbot");
                 description: _("Get started by creating a new chat or selecting one from the sidebar");
                 hexpand: true;
                 vexpand: true;
@@ -148,8 +148,8 @@ template $BavarderWindow : Adw.ApplicationWindow {
               }
 
               Adw.StatusPage status_no_thread_main {
-                icon-name: "io.github.Bavarder.Bavarder";
-                title: _("Bavarder");
+                icon-name: "org.hamonikr.Chatbot";
+                title: _("HamoniKR Chatbot");
                 description: _("Get started by creating a new chat");
                 hexpand: true;
                 vexpand: true;
@@ -290,7 +290,7 @@ menu main-menu {
   }
 
   item {
-    label: _("About Bavarder");
+    label: _("About HamoniKR Chatbot");
     action: "app.about";
   }
 }

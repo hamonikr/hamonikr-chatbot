@@ -32,17 +32,17 @@
 			<caption>
 				Screenshot of Main UI
 			</caption>
-			<image type="source">
-				https://codeberg.org/Bavarder/Bavarder/raw/branch/main/data/screenshots/preview.png
-			</image>
+            <image type="source">
+                https://github.com/hamonikr/hamonikr-chatbot
+            </image>
 		</screenshot>
 		<screenshot width="724" height="732">
 			<caption>
 				Screenshot of Preferences UI
 			</caption>
-			<image type="source">
-				https://codeberg.org/Bavarder/Bavarder/raw/branch/main/data/screenshots/preferences.png
-			</image>
+            <image type="source">
+                https://github.com/hamonikr/hamonikr-chatbot
+            </image>
 		</screenshot>
 	</screenshots>
 	<url type="homepage">

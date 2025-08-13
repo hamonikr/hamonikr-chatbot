@@ -21,7 +21,7 @@ class BaseProvider:
     data: Dict[str, str] = {}
     has_auth: bool = False
     require_authentification: bool = False
-    base_url = "https://bavarder.codeberg.page/providers/"
+    base_url = "https://github.com/hamonikr/hamonikr-chatbot"
     
     def __init__(self, app, window):
         self.slug = self.slugify(self.name)

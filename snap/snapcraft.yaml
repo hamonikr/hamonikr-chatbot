@@ -1,6 +1,6 @@
-name: bavarder
+name: hamonikr-chatbot
 base: core22 
-adopt-info: bavarder
+adopt-info: hamonikr-chatbot
 grade: stable
 confinement: strict
 
@@ -62,13 +62,12 @@ parts:
       - -share
       - -pyvenv.cfg
 
-  bavarder:
+  hamonikr-chatbot:
     after: [blueprint-compiler, gpt4all]
     plugin: meson
-    source: https://codeberg.org/Bavarder/Bavarder.git
-    source-tag: '1.0.0'
+    source: .
     meson-parameters:
-      - --prefix=/snap/bavarder/current/usr
+      - --prefix=/snap/hamonikr-chatbot/current/usr
       - -Dbuildtype=release
     build-snaps:
       - webkitgtk-6-gnome-2204-sdk/latest/stable
@@ -79,11 +78,11 @@ parts:
     override-build: |
       set -eux
       craftctl default
-      sed -e '1c#!/usr/bin/env python3' -i $CRAFT_PART_INSTALL/snap/bavarder/current/usr/bin/bavarder
-      chmod +x $CRAFT_PART_INSTALL/snap/bavarder/current/usr/bin/bavarder      
-    parse-info: [usr/share/appdata/io.github.Bavarder.Bavarder.appdata.xml]
+       sed -e '1c#!/usr/bin/env python3' -i $CRAFT_PART_INSTALL/snap/hamonikr-chatbot/current/usr/bin/hamonikr-chatbot
+       chmod +x $CRAFT_PART_INSTALL/snap/hamonikr-chatbot/current/usr/bin/hamonikr-chatbot      
+    parse-info: [usr/share/appdata/org.hamonikr.Chatbot.appdata.xml]
     organize:
-      snap/bavarder/current: .
+      snap/hamonikr-chatbot/current: .
     prime:
       - -snap/bavarder
 
@@ -106,16 +105,16 @@ plugs:
     default-provider: webkitgtk-6-gnome-2204
 
 slots:
-  bavarder:
+  hamonikr-chatbot:
     interface: dbus
     bus: session
-    name: io.github.Bavarder.Bavarder
+    name: org.hamonikr.Chatbot
 
 apps:
-  bavarder:
-    command: usr/bin/bavarder
+  hamonikr-chatbot:
+    command: usr/bin/hamonikr-chatbot
     extensions: [gnome]
-    common-id: io.github.Bavarder.Bavarder
+    common-id: org.hamonikr.Chatbot
     environment:
       PYTHONPATH: $SNAP/usr/lib/python3/dist-packages:$PYTHONPATH
       GI_TYPELIB_PATH: $SNAP/webkitgtk-platform/usr/lib/$CRAFT_ARCH_TRIPLET/girepository-1.0:$GI_TYPELIB_PATH

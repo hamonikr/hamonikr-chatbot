@@ -1,9 +1,9 @@
 {
-    "app-id" : "io.github.Bavarder.Bavarder",
+    "app-id" : "org.hamonikr.Chatbot",
     "runtime" : "org.gnome.Platform",
     "runtime-version" : "master",
     "sdk" : "org.gnome.Sdk",
-    "command" : "bavarder",
+    "command" : "hamonikr-chatbot",
     "finish-args" : [
         "--share=network",
         "--share=ipc",

@@ -6,6 +6,7 @@ Build-Depends: debhelper-compat (= 13),
                meson (>= 0.62.0),
                python3-dev,
                python3-setuptools,
+                dh-sequence-python3,
                libgtk-4-dev (>= 4.5.0),
                libadwaita-1-dev (>= 1.3.99),
                libportal-dev (>= 0.6),
@@ -35,7 +36,7 @@ Depends: ${misc:Depends},
          gir1.2-gtksource-5
 Recommends: python3-google-generativeai
 Description: Chat with an AI
- Bavarder is a chat application that allows you to chat with AI providers
+ HamoniKR Chatbot is a chat application that allows you to chat with AI providers
  like OpenAI, Hugging Face, and more. It provides a user-friendly interface
  built with GTK4 and Libadwaita.
  .

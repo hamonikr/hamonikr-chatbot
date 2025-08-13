@@ -8,7 +8,7 @@ class LocalProvider(BaseOpenAIProvider):
 
 
     def get_settings_rows(self):
-        self.url = f"https://bavarder.codeberg.page/help/local/"
+        self.url = f"https://github.com/hamonikr/hamonikr-chatbot"
         rows = super().get_settings_rows()
 
         self.model_row = Adw.EntryRow()
