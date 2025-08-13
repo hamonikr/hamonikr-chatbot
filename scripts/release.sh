@@ -16,6 +16,25 @@ cd "$PROJECT_ROOT"
 
 echo -e "${YELLOW}프로젝트 디렉토리: ${NC}$PROJECT_ROOT"
 
+# Git SSH 비대화식 설정 및 원격 URL 확인/변환
+export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -o BatchMode=yes}"
+
+REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+if [ -z "$REMOTE_URL" ]; then
+    echo -e "${RED}Error: git 원격 'origin'을 찾을 수 없습니다.${NC}"
+    exit 1
+fi
+
+# HTTPS 원격이면 SSH 형식으로 자동 전환 (예: https://github.com/owner/repo.git -> git@github.com:owner/repo.git)
+if [[ "$REMOTE_URL" =~ ^https://([^/]+)/(.+)$ ]]; then
+    HOST="${BASH_REMATCH[1]}"
+    PATH_PART="${BASH_REMATCH[2]}"
+    PATH_PART="${PATH_PART%.git}"
+    NEW_URL="git@${HOST}:${PATH_PART}.git"
+    echo -e "${YELLOW}origin 원격을 SSH로 변경합니다:${NC} $NEW_URL"
+    git remote set-url origin "$NEW_URL"
+fi
+
 # 현재 브랜치 확인
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [ "$CURRENT_BRANCH" != "dev" ]; then
