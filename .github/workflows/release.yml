@@ -21,7 +21,7 @@ jobs:
           docker-image: ubuntu:24.04
           buildpackage-opts: -us -uc
           before-build-hook: apt-get install -y devscripts equivs && mk-build-deps --install --remove debian/control && debchange --controlmaint --local="+ci${{ github.run_id }}~ubuntu2404~git$(git rev-parse --short HEAD)" "CI build"
-          extra-build-deps: devscripts git equivs debhelper build-essential
+          extra-build-deps: devscripts git equivs debhelper build-essential python3-lxml
           host-arch: amd64
           artifacts-dir: debian/artifacts-ubuntu2404
 
