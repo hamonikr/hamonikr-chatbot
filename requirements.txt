@@ -2,11 +2,12 @@
 # chmod +x flatpak-pip-generator
 # ./flatpak-pip-generator --requirements-file=requirements.txt --output pypi-dependencies
 
-requests
-tqdm
-charset-normalizer
-idna
-urllib3
-Babel
-openai
-pillow
+requests>=2.25.0
+tqdm>=4.60.0
+charset-normalizer>=2.0.0
+idna>=3.0
+urllib3>=1.26.0
+Babel>=2.9.0
+openai>=1.12.0,<2.0.0
+pillow>=8.0.0
+packaging>=20.0

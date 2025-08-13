@@ -33,7 +33,7 @@ from babel.dates import format_date, format_datetime, format_time
 from ..constants import app_id, build_type, rootdir
 from ..widgets.thread_item import ThreadItem
 from ..widgets.item import Item
-from ..threading import KillableThread
+from ..hamonikr_threading import KillableThread
 from .export_dialog import ExportDialog
 
 class CustomEntry(Gtk.TextView):
