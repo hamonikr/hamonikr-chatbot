@@ -1,5 +1,9 @@
 
 from gi.repository import Gtk, Adw
+try:
+    from builtins import _  # provided by gettext.install in launcher
+except Exception:
+    from gettext import gettext as _  # fallback when running out of tree
 
 from .. import constants
 
@@ -20,38 +24,35 @@ class AboutWindow:
 
     def setup(self):
         self.about_window = Adw.AboutWindow(
-            application_name="Bavarder",
+            application_name="HamoniKR Chatbot",
             transient_for=self.app.get_active_window(),
             application_icon=constants.app_id,
-            developer_name="0xMRTT",
+            developer_name="HamoniKR",
             website=constants.project_url,
             support_url=constants.help_url,
             issue_url=constants.bugtracker_url,
-            developers=[
-                "0xMRTT https://github.com/0xMRTT",
-            ],
-            documenters=[
-                "0xMRTT https://github.com/0xMRTT",
-            ],
-            designers=[
-                "David Lapshin https://github.com/daudix-UFO",
-            ],
-            artists=[
-                "David Lapshin https://github.com/daudix-UFO",
-            ],
             comments=_("Chit-Chat with AI"),
             translator_credits=translator_credits,
-            copyright=_("Copyright © 2023 0xMRTT"),
+            copyright=_("Copyright © 2025 HamoniKR"),
             license_type=Gtk.License.GPL_3_0,
             version=constants.version,
             release_notes_version=constants.rel_ver,
         )
 
+        # Credits consolidated into two sections: Upstream and HamoniKR
         self.about_window.add_credit_section(
-            _("Packaging"),
+            _("Upstream"),
             [
-                "Soumyadeep Ghosh https://codeberg.org/soumyadghosh"
-            ]
+                "0xMRTT https://github.com/0xMRTT",
+                "David Lapshin https://github.com/daudix-UFO",
+                "Soumyadeep Ghosh https://codeberg.org/soumyadghosh",
+            ],
+        )
+        self.about_window.add_credit_section(
+            _("HamoniKR"),
+            [
+                "HamoniKR https://github.com/hamonikr/hamonikr-chatbot",
+            ],
         )
         self.about_window.add_link(
             _("Translate"),

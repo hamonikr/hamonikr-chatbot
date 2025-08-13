@@ -21,8 +21,13 @@ from datetime import datetime
 import locale 
 import io 
 import base64
+import re
 
 from gi.repository import Gtk, Gio, Adw, GLib, Gdk
+try:
+    from builtins import _  # provided by gettext.install in launcher
+except Exception:
+    from gettext import gettext as _  # fallback when running out of tree
 from babel.dates import format_date, format_datetime, format_time
 
 from ..constants import app_id, build_type, rootdir
@@ -274,7 +279,26 @@ class BavarderWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback()
     def on_new_chat_action(self, *args):
-        self.app.on_new_chat_action(_, _)
+        # 새 채팅 생성
+        self.app.on_new_chat_action(None, None)
+        # 방금 생성된 마지막 스레드를 선택/활성화하여 중복 생성 방지
+        try:
+            last_index = len(self.app.data["chats"]) - 1
+            if last_index >= 0:
+                row = self.threads_list.get_row_at_index(last_index)
+                if row:
+                    self.threads_list.select_row(row)
+                    self.threads_row_activated_cb()
+                    try:
+                        self.split_view.set_show_content(True)
+                    except Exception:
+                        pass
+                    try:
+                        self.message_entry.grab_focus()
+                    except Exception:
+                        pass
+        except Exception:
+            pass
 
     @Gtk.Template.Callback()
     def scroll_down(self, *args):
@@ -508,6 +532,14 @@ class BavarderWindow(Adw.ApplicationWindow):
         self.scroll_down()
 
     def add_assistant_item(self, content):
+        # If this is the first assistant reply in a brand-new chat, derive a title
+        # from the assistant's first message (common chat UX)
+        try:
+            if len(self.content) == 1:  # exactly one user message present
+                self._maybe_update_chat_title_from_assistant(content)
+        except Exception:
+            pass
+
         c = {
                 "role": self.app.bot_name,
                 "content": content,
@@ -534,6 +566,105 @@ class BavarderWindow(Adw.ApplicationWindow):
         self.threads_row_activated_cb()
 
         self.scroll_down()
+
+    def _sanitize_title_text(self, text: str, max_len: int = 40) -> str:
+        """Return a single-line, trimmed title, capped to max_len with ellipsis.
+
+        - Use first non-empty line
+        - Strip common markdown markers (**, *, _, __, ~~), inline code/backticks,
+          heading/blockquote markers, and link syntax while keeping visible text
+        - Collapse multiple spaces
+        - Truncate with … if longer than max_len
+        """
+        if not text:
+            return ""
+        # Choose first non-empty line
+        line = ""
+        for part in str(text).splitlines():
+            if part.strip():
+                line = part.strip()
+                break
+        if not line:
+            return ""
+        # Basic markdown cleanup
+        # Remove code fences/backticks
+        line = line.replace("```", "")
+        line = re.sub(r"`{1,3}([^`]*)`{1,3}", r"\1", line)
+        # Remove heading/blockquote markers
+        line = line.lstrip("# ").lstrip("> ")
+        # Convert markdown links [text](url) -> text
+        line = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", line)
+        # Remove bold/italic/underline/strike wrappers
+        line = re.sub(r"(\*\*|__)(.*?)\1", r"\2", line)
+        line = re.sub(r"(\*|_)(.*?)\1", r"\2", line)
+        line = re.sub(r"~~(.*?)~~", r"\1", line)
+        # Remove any remaining lightweight markers
+        line = re.sub(r"[*_`~]", "", line)
+        # Collapse whitespace
+        line = " ".join(line.split())
+        if len(line) > max_len:
+            line = line[:max_len].rstrip() + "…"
+        return line
+
+    def _maybe_update_chat_title_from_assistant(self, assistant_text: str):
+        """Update the chat title from the first assistant reply if still default.
+
+        Falls back to the first user prompt if assistant text is unsuitable
+        (e.g., image/base64 or empty).
+        """
+        try:
+            current_title = self.chat.get("title", "")
+            # Only auto-rename if it still looks like a fresh default title
+            if not current_title.startswith("New Chat"):
+                return
+
+            # Heuristic: skip base64-like long chunks without spaces
+            at = str(assistant_text or "")
+            is_probably_base64 = len(at) > 120 and (" " not in at)
+
+            new_title = ""
+            if not is_probably_base64:
+                new_title = self._sanitize_title_text(at)
+
+            if not new_title or new_title.lower().startswith("sorry"):
+                # Fallback to user's first message if assistant text is not helpful
+                try:
+                    user_first = self.content[0]["content"]
+                    new_title = self._sanitize_title_text(user_first)
+                except Exception:
+                    pass
+
+            if not new_title:
+                return
+
+            # Persist into data model
+            self.chat["title"] = new_title
+
+            # Update header title if this chat is open
+            try:
+                self.title.set_title(new_title)
+            except Exception:
+                pass
+
+            # Update corresponding ThreadItem label in the sidebar
+            try:
+                current_id = self.chat.get("id")
+                for thread_item in self.threads:
+                    if getattr(thread_item, "id", None) == current_id:
+                        thread_item.label_text = new_title
+                        thread_item.label.set_text(new_title)
+                        break
+            except Exception:
+                pass
+
+            # Save to disk so the new title persists
+            try:
+                self.app.save()
+            except Exception:
+                pass
+        except Exception:
+            # Never break the message flow due to title update issues
+            pass
 
 
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schemalist gettext-domain="bavarder">
-	<schema id="@APP_ID@" path="/io/github/Bavarder/Bavarder/">
+<schemalist gettext-domain="hamonikr-chatbot">
+    <schema id="@APP_ID@" path="/org/hamonikr/Chatbot/">
 		<key name="local-mode" type="b">
 			<default>false</default>
 		</key>

@@ -381,7 +381,8 @@ class Item(Gtk.Box):
                         if is_code:
                             result = line
                         else:
-                            result = re.sub(regexp, sub, line)
+                            # 섹션 치환은 이스케이프된 문자열(result)에 적용해야 &/< />가 보존됩니다.
+                            result = re.sub(regexp, sub, result)
 
             if is_code and not code_start:
                 code_lines.append(result)
@@ -403,14 +404,14 @@ class Item(Gtk.Box):
                 result = re.sub(regexp, sub, result)
             
 
-            # 마크다운 링크 [text](url) → 안전한 앵커로 변환
-            result = re_md_link.sub(lambda m: f"<a href='{escape_attr(m.group('url'))}'>{m.group('text')}</a>", result)
+            # 마크다운 링크 [text](url) → 안전한 앵커로 변환 (텍스트도 이스케이프)
+            result = re_md_link.sub(lambda m: f"<a href='{escape_attr(m.group('url'))}'>{escape_line(m.group('text'))}</a>", result)
 
             # 벌거벗은 URL을 안전하게 감싸기 (이미 링크 포함이면 패스)
             if not (re_href.search(result) or re_atag.search(result)):
                 for m in re.finditer(re_uri, result):
                     u = m.group(0)
-                    result = result.replace(u, f"<a href='{escape_attr(u)}'>{u}</a>")
+                    result = result.replace(u, f"<a href='{escape_attr(u)}'>{escape_line(u)}</a>")
 
             output.append(result)
 

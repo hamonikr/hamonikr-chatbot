@@ -1,5 +1,9 @@
 data/io.github.Bavarder.Bavarder.desktop.in.in
 data/io.github.Bavarder.Bavarder.gschema.xml.in
+src/views/window.blp
+src/views/about_window.py
+src/views/preferences_window.blp
+src/views/export_dialog.blp
 src/gtk/help-overlay.blp
 src/providers/__init__.py
 src/providers/base.py

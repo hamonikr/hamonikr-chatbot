@@ -28,6 +28,10 @@ gi.require_version('Xdp', '1.0')
 gi.require_version('GtkSource', '5')
 
 from gi.repository import Gtk, Gio, Adw, Xdp, GLib
+try:
+    from builtins import _  # provided by gettext.install in launcher
+except Exception:
+    from gettext import gettext as _  # fallback when running out of tree
 from .views.window import BavarderWindow
 from .views.about_window import AboutWindow
 from .views.preferences_window import PreferencesWindow
@@ -48,7 +52,7 @@ user_cache_dir = os.environ.get(
     "XDG_CACHE_HOME", os.environ["HOME"] + "/.cache"
 )
 
-model_path = os.path.join(user_cache_dir, "bavarder", "models")
+model_path = os.path.join(user_cache_dir, "hamonikr-chatbot", "models")
 
 class BavarderApplication(Adw.Application):
     """The main application singleton class."""
@@ -60,7 +64,7 @@ class BavarderApplication(Adw.Application):
     number_of_win = 0
 
     def __init__(self):
-        super().__init__(application_id='io.github.Bavarder.Bavarder',
+        super().__init__(application_id=app_id,
                          flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
         self.create_action("quit", self.on_quit, ["<primary>q"])
         self.create_action("close", self.on_close, ["<primary>w"])
@@ -71,7 +75,7 @@ class BavarderApplication(Adw.Application):
         self.create_action('ask', self.on_ask)
         self.create_action('new_window', self.on_new_window, ["<primary><shift>n"])
 
-        self.data_path = os.path.join(user_data_dir, "bavarder")
+        self.data_path = os.path.join(user_data_dir, "hamonikr-chatbot")
 
         if not os.path.exists(self.data_path):
             os.makedirs(self.data_path)
@@ -173,7 +177,7 @@ class BavarderApplication(Adw.Application):
 
     def save(self):
         with open(self.data_path, "w", encoding="utf-8") as f:
-            self.data = json.dump(self.data, f)
+            json.dump(self.data, f)
             self.settings.set_boolean("local-mode", self.local_mode)
             self.settings.set_string("current-provider", self.current_provider)
             self.settings.set_string("model", self.model_name)
@@ -299,7 +303,7 @@ class BavarderApplication(Adw.Application):
             else:
                 for p in ["Hi", "Hello"]:
                     if p.lower() in prompt.lower():
-                        return _("Hello, I am Bavarder, a Chit-Chat AI")
+                        return _("Hello, I am HamoniKR Chatbot, a Chit-Chat AI")
                 system_template = f"""You are a helpful and friendly AI assistant with the name {self.bot_name}. The name of the user are {self.user_name}. Respond very concisely."""
                 with self.model.chat_session(self.model_settings.get("system_template", system_template)):
                     self.model.current_chat_session = chat["content"].copy()

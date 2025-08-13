@@ -22,7 +22,7 @@ class BaseHFImageProvider(BaseImageProvider):
                 response = requests.post(API_URL, json=payload)
 
             if response.status_code == 403:
-                return _("You've reached the rate limit! Please add a token to the preferences. You can get the token by following this [guide](https://bavarder.codeberg.page/help/huggingface/)")
+                return _("You've reached the rate limit! Please add a token to the preferences. You can get the token by following this [guide](https://github.com/hamonikr/hamonikr-chatbot)")
             elif response.status_code != 200:
                 return _("Sorry, I don't know what to say! (Error: {response.status_code})")
 
