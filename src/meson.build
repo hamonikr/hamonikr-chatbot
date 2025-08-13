@@ -48,7 +48,7 @@ configure_file(
 bavarder_sources = [
   '__init__.py',
   'main.py',
-  'threading.py'
+  'hamonikr_threading.py'
 ]
 
 PY_INSTALLDIR.install_sources(bavarder_sources, subdir: MODULE_DIR)
