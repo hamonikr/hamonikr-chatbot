@@ -9,6 +9,11 @@ from PIL import Image, UnidentifiedImageError
 from ..constants import app_id, rootdir
 from .code_block import CodeBlock
 
+try:
+    from builtins import _  # provided by gettext.install in launcher
+except ImportError:
+    from gettext import gettext as _  # fallback when running out of tree
+
 
 H1="H1"
 H2="H2"
@@ -65,6 +70,7 @@ class Item(Gtk.Box):
     popover = Gtk.Template.Child()
     avatar = Gtk.Template.Child()
     message_bubble = Gtk.Template.Child()
+    copy_button = Gtk.Template.Child()
     model = Gtk.Template.Child()
 
     def __init__(self, parent, chat, item, **kwargs):
@@ -113,6 +119,8 @@ class Item(Gtk.Box):
                     label.set_valign(Gtk.Align.START)
                     label.set_hexpand(True)
                     label.set_halign(Gtk.Align.START)
+                    label.set_selectable(True)  # 텍스트 선택 가능하게 설정
+                    label.add_css_class("message-content")  # 폰트 설정을 위한 CSS 클래스 추가
                     self.content.append(label)
 
                     if not isinstance(line, str):
@@ -137,6 +145,8 @@ class Item(Gtk.Box):
                     label.set_valign(Gtk.Align.START)
                     label.set_hexpand(True)
                     label.set_halign(Gtk.Align.START)
+                    label.set_selectable(True)  # 텍스트 선택 가능하게 설정
+                    label.add_css_class("message-content")  # 폰트 설정을 위한 CSS 클래스 추가
                     self.content.append(label)
         else:
             picture = Gtk.Picture()
@@ -158,12 +168,17 @@ class Item(Gtk.Box):
             self.message_bubble.add_css_class("message-bubble-user")
             self.avatar.add_css_class("avatar-user")
             role = self.app.user_name
+            # 사용자 메시지에는 복사 버튼 숨김
+            self.copy_button.set_visible(False)
         elif t == self.app.bot_name.lower() or t == "assistant": # Assistant
             self.avatar.set_icon_name("bot-symbolic")
             self.user.add_css_class("warning")
             role = self.app.bot_name
+            # Assistant 메시지에만 복사 버튼 표시
+            self.copy_button.set_visible(True)
         else:
             role = t
+            self.copy_button.set_visible(False)
 
         self.timestamp.set_text(self.item.get("time", ""))
         self.model.set_text(self.item.get("model", ""))
@@ -246,10 +261,30 @@ class Item(Gtk.Box):
     def on_copy(self, *args):
         Gdk.Display.get_default().get_clipboard().set(self.content_text)
 
+    @Gtk.Template.Callback()
+    def on_copy_button_clicked(self, *args):
+        """복사 버튼 클릭 시 실행되는 메소드"""
+        # 클립보드에 텍스트 복사
+        Gdk.Display.get_default().get_clipboard().set(self.content_text)
+        
+        # 시각적 피드백 - 버튼 아이콘을 잠시 체크마크로 변경
+        original_icon = self.copy_button.get_icon_name()
+        self.copy_button.set_icon_name("check-round-outline2-symbolic")
+        self.copy_button.set_tooltip_text(_("Copied!"))
+        
+        # 토스트 메시지 표시
         toast = Adw.Toast()
-        toast.set_title(_('Message copied'))
-
+        toast.set_title(_("Message copied to clipboard"))
+        toast.set_timeout(2)
         self.parent.toast_overlay.add_toast(toast)
+        
+        # 1.5초 후 원래 아이콘으로 복원
+        def restore_icon():
+            self.copy_button.set_icon_name(original_icon)
+            self.copy_button.set_tooltip_text(_("Copy message"))
+            return False  # GLib.timeout_add에서 False 반환하면 타이머 종료
+        
+        GLib.timeout_add(1500, restore_icon)
 
 
 

@@ -23,29 +23,35 @@ template $BavarderWindow : Adw.ApplicationWindow {
       max-sidebar-width: 260;
       sidebar-width-fraction: 0.38;
       sidebar: Adw.NavigationPage {
-        title: _("HamoniKR Chatbot");
+        title: _("Chatbot");
         child: Adw.ToolbarView {
           [top]
           Adw.HeaderBar {
+            show-title: false;
             [start]
-            Button new_chat {
-              icon-name: "chat-message-new-symbolic";
-              tooltip-text: _("New Chat");
-              clicked => $on_new_chat_action();
-            }
-            [end]
-            MenuButton theme_button {
-              primary: false;
-              icon-name: "weather-clear-night-symbolic";
-              tooltip-text: _("Theme");
-              menu-model: theme-menu;
-            }
             MenuButton menu_button {
               primary: true;
               menu-model: main-menu;
               icon-name: "open-menu-symbolic";
               tooltip-text: _("Main Menu");
-
+            }
+            [end]
+            Button new_chat {
+              icon-name: "chat-message-new-symbolic";
+              tooltip-text: _("New Chat");
+              clicked => $on_new_chat_action();
+            }
+            Button clear_all_threads_button {
+              icon-name: "user-trash-symbolic";
+              tooltip-text: _("Clear All Threads");
+              clicked => $on_clear_all_threads();
+              styles ["flat"]
+            }
+            MenuButton theme_button {
+              primary: false;
+              icon-name: "weather-clear-night-symbolic";
+              tooltip-text: _("Theme");
+              menu-model: theme-menu;
             }
           }
           content: Gtk.ScrolledWindow {
