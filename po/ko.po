@@ -496,10 +496,6 @@ msgid ""
 "top!"
 msgstr "상단의 점(...) 메뉴를 클릭하여 환경설정에서 모델을 다운로드해주세요!"
 
-#: src/main.py:264
-msgid "Hello, I am HamoniKR Chatbot, a Chit-Chat AI"
-msgstr "안녕하세요, 저는 대화하는 AI, 하모니카 챗봇입니다"
-
 #: src/main.py:287
 msgid "Please enable a provider from the Dot Menu"
 msgstr "상단 점(...) 메뉴에서 제공자를 활성화해주세요"
