@@ -507,9 +507,6 @@ class BavarderApplication(Adw.Application):
             if not self.setup_chat(): # NO MODELS:
                 return _("Please download a model from Preferences by clicking on the Dot Menu at the top!")
             else:
-                for p in ["Hi", "Hello"]:
-                    if p.lower() in prompt.lower():
-                        return _("Hello, I am HamoniKR Chatbot, a Chit-Chat AI")
                 system_template = f"""You are a helpful and friendly AI assistant with the name {self.bot_name}. The name of the user are {self.user_name}. Respond very concisely."""
                 try:
                     if getattr(self, "transient_system_prompt", None):
