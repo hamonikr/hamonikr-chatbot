@@ -4,6 +4,9 @@ hamonikr-chatbot (1.2.4) unstable; urgency=medium
   * Updated the application to ensure 'light' theme is applied when 'system' is selected
   * Enhanced OpenAI client initialization to use a dummy key if the actual key is not available
   * Improved robustness and error handling for API key and base URL settings in OpenAI providers
+  *   * remove greeting message and update UI titles
+  *   * enhance chat appearance settings and update default provider
+  *   * remove obsolete build and configuration files
 
  -- HamoniKR <pkg@hamonikr.org>  Sat, 16 Aug 2025 21:09:44 +0900
 
