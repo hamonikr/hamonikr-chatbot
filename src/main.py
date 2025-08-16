@@ -143,8 +143,9 @@ class BavarderApplication(Adw.Application):
         self.data = {
             "chats": [],
             "providers": {
-                "google-flan-t5-xxl": {"enabled": True, "data": {}},
-                "gpt-2": {"enabled": True, "data": {}},
+                "ollama": {"enabled": True, "data": {}},
+                "google-flan-t5-xxl": {"enabled": False, "data": {}},
+                "gpt-2": {"enabled": False, "data": {}},
 
             },
             "models": {}
@@ -162,6 +163,11 @@ class BavarderApplication(Adw.Application):
         self.local_mode = self.settings.get_boolean("local-mode")
         self.current_provider = self.settings.get_string("current-provider")
         self.model_name = self.settings.get_string("model")
+        
+        # 신규 사용자의 경우 current_provider가 기본값이 아니면 ollama로 설정
+        if self.current_provider in ["google-flan-t5-xxl", ""]:
+            self.settings.set_string("current-provider", "ollama")
+            self.current_provider = "ollama"
         # 초기 테마 적용
         try:
             scheme = self.settings.get_string("color-scheme") or "light"

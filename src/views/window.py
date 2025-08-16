@@ -190,6 +190,9 @@ class BavarderWindow(Adw.ApplicationWindow):
 
         self.main.connect("edge-reached", self.on_edge_reached)
         self.main.connect("edge-overshot", self.on_edge_reached)
+        
+        # 폰트 설정 적용
+        self.apply_font_settings()
 
     @property
     def chat(self):
@@ -348,6 +351,90 @@ class BavarderWindow(Adw.ApplicationWindow):
             else:
                 toast.set_title(_("Nothing to clear!"))
             self.toast_overlay.add_toast(toast)
+
+    @Gtk.Template.Callback()
+    def on_clear_all_threads(self, *args):
+        """전체 대화 스레드를 삭제하는 기능"""
+        if self.app.data["chats"]:
+            dialog = Adw.MessageDialog(
+                heading=_("Delete All Threads"),
+                body=_("Are you sure you want to delete all threads? This can't be undone!"),
+                body_use_markup=True
+            )
+
+            dialog.add_response("cancel", _("Cancel"))
+            dialog.add_response("delete", _("Delete"))
+            dialog.set_response_appearance("delete", Adw.ResponseAppearance.DESTRUCTIVE)
+            dialog.set_default_response("cancel")
+            dialog.set_close_response("cancel")
+
+            dialog.connect("response", self.on_clear_all_threads_response)
+
+            dialog.set_transient_for(self)
+            dialog.present()
+        else:
+            toast = Adw.Toast()
+            toast.set_title(_("Nothing to clear!"))
+            self.toast_overlay.add_toast(toast)
+
+    def on_clear_all_threads_response(self, _widget, response):
+        """전체 대화 스레드 삭제 확인 응답 처리"""
+        if response == "delete":
+            # 앱의 clear_all_chats 메소드를 사용하여 모든 대화 삭제
+            self.app.clear_all_chats()
+            
+            # 현재 화면을 초기 상태로 설정
+            self.stack.set_visible_child(self.status_no_thread)
+            self.thread_stack.set_visible_child(self.status_no_chat_thread)
+            
+            toast = Adw.Toast()
+            toast.set_title(_("All threads cleared!"))
+            self.toast_overlay.add_toast(toast)
+
+    def apply_font_settings(self):
+        """폰트 및 줄높이 설정을 메시지 위젯들에 적용"""
+        font_family = self.settings.get_string("chat-font-family")
+        font_size = self.settings.get_int("chat-font-size")
+        line_height = self.settings.get_double("chat-line-height")
+        
+        # CSS 스타일 생성 (폰트와 줄높이 포함)
+        css_style = f"""
+        .message-content {{
+            font-family: "{font_family}";
+            font-size: {font_size}pt;
+            line-height: {line_height};
+            margin: 4px 0;
+        }}
+        """
+        
+        # CSS Provider 생성 및 적용
+        css_provider = Gtk.CssProvider()
+        css_provider.load_from_data(css_style.encode())
+        
+        # 현재 디스플레이에 CSS 적용
+        display = Gdk.Display.get_default()
+        Gtk.StyleContext.add_provider_for_display(
+            display, 
+            css_provider, 
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        
+        # 기존 메시지들에도 새 폰트 적용
+        self.refresh_message_fonts()
+
+    def refresh_message_fonts(self):
+        """기존 메시지들의 폰트를 새로고침"""
+        # 현재 표시된 대화의 모든 메시지 아이템에 CSS 클래스 적용
+        def apply_to_child(child):
+            if hasattr(child, 'content'):
+                # Item 위젯의 content 박스에 CSS 클래스 추가
+                child.content.add_css_class("message-content")
+        
+        # main_list의 모든 자식들을 순회하면서 폰트 적용
+        child = self.main_list.get_first_child()
+        while child:
+            apply_to_child(child)
+            child = child.get_next_sibling()
 
     def on_export(self, *args):
         if self.content:

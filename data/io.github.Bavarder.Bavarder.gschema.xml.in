@@ -5,7 +5,7 @@
 			<default>false</default>
 		</key>
 		<key name="current-provider" type="s">
-			<default>'google-flan-t5-xxl'</default>
+			<default>'ollama'</default>
 		</key>
 		<key name="model" type="s">
 			<default>'orca-mini-3b.ggmlv3.q4_0.bin'</default>
@@ -30,6 +30,15 @@
 		</key>
 		<key name="color-scheme" type="s">
 			<default>'light'</default>
+		</key>
+		<key name="chat-font-family" type="s">
+			<default>'Sans'</default>
+		</key>
+		<key name="chat-font-size" type="i">
+			<default>11</default>
+		</key>
+		<key name="chat-line-height" type="d">
+			<default>1.6</default>
 		</key>
 
 	</schema>

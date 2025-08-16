@@ -9,14 +9,14 @@ from .base import BaseProvider
 
 class OllamaProvider(BaseProvider):
     name = "Ollama"
-    model = "llama3.2"
+    model = "gpt-oss:latest"
     api_key_title = None  # Ollama doesn't need API key
-    base_url = "http://localhost:11434"
+    base_url = "https://api.hamonize.com/ollama"
     
     def __init__(self, app, window):
         super().__init__(app, window)
-        self.base_url = self.data.get("base_url", "http://localhost:11434")
-        self.model = self.data.get("model", "llama3.2")
+        self.base_url = self.data.get("base_url", "https://api.hamonize.com/ollama")
+        self.model = self.data.get("model", "gpt-oss:latest")
     
     def ask(self, prompt, chat, stream=False, callback=None, system_prompt=None):
         # Convert chat history to Ollama format

@@ -66,6 +66,18 @@ template $Item : Box {
             halign: start;
           }
 
+          // Copy button for assistant messages
+          Button copy_button {
+            icon-name: "edit-copy-symbolic";
+            tooltip-text: _("Copy message");
+            valign: center;
+            halign: end;
+            visible: false;
+            clicked => $on_copy_button_clicked();
+            styles ["flat", "circular"]
+            margin-end: 4;
+          }
+
           // Timestamp label
           Label timestamp {
             styles [
@@ -76,7 +88,7 @@ template $Item : Box {
 
             justify: right;
             vexpand: true;
-            hexpand: true;
+            hexpand: false;
             halign: end;
           }
         }
