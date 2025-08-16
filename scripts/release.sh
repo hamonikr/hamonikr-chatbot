@@ -160,14 +160,8 @@ echo -e "\n${YELLOW}meson.build 버전 업데이트 중...${NC}"
 echo -e "${YELLOW}업데이트 전 meson.build 버전:${NC}"
 grep -n "^project(\|version:" meson.build | head -n2
 
-# project() 라인의 version만 안전하게 1회 치환 (다른 의존성의 version 필드는 보존)
-awk 'BEGIN{done=0} {
-  if (!done && $0 ~ /^project\(/ && $0 ~ /version: \047[^\047]*\047/) {
-    sub(/version: \047[^\047]*\047/, "version: \047"ENVIRON["NEW_VER_STR"]"\047")
-    done=1
-  }
-  print
-}' NEW_VER_STR="${NEW_VERSION#v}" meson.build > meson.build.tmp && mv meson.build.tmp meson.build
+# meson.build 파일에서 project() 선언부의 version 필드만 업데이트
+sed -i "0,/version: '[^']*'/s/version: '[^']*'/version: '${NEW_VERSION#v}'/" meson.build
 
 echo -e "${YELLOW}업데이트 후 meson.build 버전:${NC}"
 grep -n "^project(\|version:" meson.build | head -n2
