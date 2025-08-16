@@ -29,7 +29,7 @@
 			<default>false</default>
 		</key>
 		<key name="color-scheme" type="s">
-			<default>'system'</default>
+			<default>'light'</default>
 		</key>
 
 	</schema>

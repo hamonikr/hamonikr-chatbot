@@ -20,21 +20,32 @@ class BaseOpenAIImageProvider(BaseImageProvider):
     def __init__(self, app, window):
         super().__init__(app, window)
 
+        # API 키가 없어도 안전하게 초기화되도록 수정
+        api_key = os.environ.get("OPENAI_API_KEY") or "dummy-key"
+        
         try:
             self.client = OpenAI(
-                api_key=os.environ.get("OPENAI_API_KEY"),
+                api_key=api_key,
             )
-        except openai.OpenAIError:
-            self.client = OpenAI(
-                api_key="",
-            )
+        except Exception as e:
+            # OpenAI 클라이언트 초기화 실패 시 더미 클라이언트로 대체
+            try:
+                self.client = OpenAI(
+                    api_key="dummy-key",
+                )
+            except Exception:
+                # 완전히 실패한 경우 None으로 설정
+                self.client = None
 
-        if self.data.get("api_key"):
+        if self.client and self.data.get("api_key"):
             self.client.api_key = self.data["api_key"]
-        if self.data.get("api_base"):
+        if self.client and self.data.get("api_base"):
             self.client.base_url = self.data["api_base"]
 
     def ask(self, prompt, chat):
+        if not self.client:
+            return _("OpenAI client not initialized. Please check your API key in preferences.")
+        
         if not self.model:
             return _("No model selected, you can choose one in preferences")
 
@@ -102,7 +113,7 @@ class BaseOpenAIImageProvider(BaseImageProvider):
 
         self.api_row = Adw.PasswordEntryRow()
         self.api_row.connect("apply", self.on_apply)
-        self.api_row.props.text = self.client.api_key or ""
+        self.api_row.props.text = (self.client.api_key if self.client else "") or ""
         self.api_row.props.title = self.api_key_title
         self.api_row.set_show_apply_button(True)
         self.api_row.add_suffix(self.how_to_get_a_token())
@@ -110,7 +121,7 @@ class BaseOpenAIImageProvider(BaseImageProvider):
 
         self.api_url_row = Adw.EntryRow()
         self.api_url_row.connect("apply", self.on_apply)
-        self.api_url_row.props.text=str(self.client.base_url) or ""
+        self.api_url_row.props.text = str(self.client.base_url if self.client else "") or ""
         self.api_url_row.props.title = "API Url"
         self.api_url_row.set_show_apply_button(True)
         self.api_url_row.add_suffix(self.how_to_get_base_url())
@@ -120,11 +131,25 @@ class BaseOpenAIImageProvider(BaseImageProvider):
 
     def on_apply(self, widget):
         api_key = self.api_row.get_text()
-        self.client.api_key = api_key
-        self.client.base_url = self.api_url_row.get_text()
-
-        self.data["api_key"] = self.client.api_key
-        self.data["api_base"] = str(self.client.base_url)
+        
+        # 클라이언트가 없으면 새로 생성 시도
+        if not self.client and api_key:
+            try:
+                self.client = OpenAI(api_key=api_key)
+            except Exception:
+                # 실패해도 계속 진행
+                pass
+        
+        if self.client:
+            self.client.api_key = api_key
+            self.client.base_url = self.api_url_row.get_text()
+            
+            self.data["api_key"] = self.client.api_key
+            self.data["api_base"] = str(self.client.base_url)
+        else:
+            # 클라이언트가 없어도 데이터는 저장
+            self.data["api_key"] = api_key
+            self.data["api_base"] = self.api_url_row.get_text()
 
 
     def how_to_get_base_url(self):
