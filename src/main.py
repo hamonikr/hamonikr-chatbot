@@ -164,9 +164,13 @@ class BavarderApplication(Adw.Application):
         self.model_name = self.settings.get_string("model")
         # 초기 테마 적용
         try:
-            scheme = self.settings.get_string("color-scheme") or "system"
+            scheme = self.settings.get_string("color-scheme") or "light"
+            # 시스템 테마가 설정되어 있으면 라이트 테마로 변경
+            if scheme == "system":
+                scheme = "light"
+                self.settings.set_string("color-scheme", scheme)
         except Exception:
-            scheme = "system"
+            scheme = "light"
         self.apply_color_scheme(scheme)
 
         self.create_stateful_action(
@@ -210,7 +214,8 @@ class BavarderApplication(Adw.Application):
             elif scheme == "dark":
                 sm.set_color_scheme(Adw.ColorScheme.FORCE_DARK)
             else:
-                sm.set_color_scheme(Adw.ColorScheme.DEFAULT)
+                # 시스템 테마 제거, 기본적으로 라이트 테마 사용
+                sm.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
         except Exception:
             pass
 
@@ -218,7 +223,12 @@ class BavarderApplication(Adw.Application):
         try:
             scheme = param.get_string()
         except Exception:
-            scheme = "system"
+            scheme = "light"
+        
+        # 시스템 테마 선택 시 라이트 테마로 변경
+        if scheme == "system":
+            scheme = "light"
+            
         self.apply_color_scheme(scheme)
         try:
             self.settings.set_string("color-scheme", scheme)
