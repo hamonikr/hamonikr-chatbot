@@ -541,11 +541,32 @@ class BavarderWindow(Adw.ApplicationWindow):
 
         # 스트리밍 표시를 위한 빈 어시스턴트 항목을 먼저 추가하고, 해당 위젯 라벨을 콜백에서 갱신한다
         # 1) 데이터 모델에 비어있는 어시스턴트 메시지 추가
+        # Provider · Model 정보 설정
+        display_model = "hamonize"
+        try:
+            provider = self.app.providers.get(self.app.current_provider)
+            if provider and provider.enabled:
+                prov_name = getattr(provider, 'name', self.app.current_provider)
+                prov_model = getattr(provider, 'model', None) or getattr(provider, 'data', {}).get('model', '')
+                
+                # OpenRouter의 경우 default_model도 확인
+                if self.app.current_provider == "openrouter" and not prov_model:
+                    default_model = getattr(provider, 'default_model', '')
+                    if default_model:
+                        prov_model = default_model
+                
+                if prov_model:
+                    display_model = f"{prov_name} · {prov_model}"
+                else:
+                    display_model = prov_name
+        except Exception:
+            pass
+            
         stream_item_dict = {
             "role": self.app.bot_name,
             "content": "",
             "time": self.get_time(),
-            "model": "",
+            "model": display_model,
         }
         self.content.append(stream_item_dict)
 
@@ -748,6 +769,13 @@ class BavarderWindow(Adw.ApplicationWindow):
             if provider and provider.enabled:
                 prov_name = getattr(provider, 'name', self.app.current_provider)
                 prov_model = getattr(provider, 'model', None) or getattr(provider, 'data', {}).get('model', '')
+                
+                # OpenRouter의 경우 default_model도 확인
+                if self.app.current_provider == "openrouter" and not prov_model:
+                    default_model = getattr(provider, 'default_model', '')
+                    if default_model:
+                        prov_model = default_model
+                
                 if prov_model:
                     display_model = f"{prov_name} · {prov_model}"
                 else:

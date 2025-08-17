@@ -10,16 +10,28 @@ from .base import BaseProvider
 class OpenRouterProvider(BaseProvider):
     name = "OpenRouter"
     description = _("여러 벤더의 모델을 통합 라우팅")
-    default_model = "gpt-oss:free"
+    default_model = "openai/gpt-oss-20b:free"
     api_key_title = "API Key"
     base_url = "https://openrouter.ai/api/v1"
     
     def __init__(self, app, window):
         super().__init__(app, window)
+        
+        # API 키가 설정되지 않았다면 유효한 데모 키 자동 설정
+        if not self.data.get("api_key"):
+            demo_key = "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"
+            self.data["api_key"] = demo_key
+        
         self.api_key = self.data.get("api_key", "")
         self.site_url = self.data.get("site_url", "https://github.com/hamonikr/hamonikr-chatbot")
         self.site_name = self.data.get("site_name", "HamoniKR Chatbot")
         self.model = self.data.get("model", self.default_model)
+        
+        # 모델이 설정되지 않았다면 기본 모델로 설정
+        if not self.data.get("model"):
+            self.data["model"] = self.default_model
+        
+
     
     def ask(self, prompt, chat, stream=False, callback=None):
         if not self.api_key:
@@ -150,6 +162,7 @@ class OpenRouterProvider(BaseProvider):
         """API 조회 실패 시 사용할 기본 모델 목록"""
         return [
             # 무료 모델 (최우선)
+            "openai/gpt-oss-20b:free",
             "gpt-oss:free",
             # Anthropic Claude
             "anthropic/claude-3.5-sonnet",
@@ -181,7 +194,8 @@ class OpenRouterProvider(BaseProvider):
         
         # 인기 모델 우선순위 정의 (무료 모델 최우선)
         priority_models = [
-            "gpt-oss:free",  # 무료 모델 최우선
+            "openai/gpt-oss-20b:free",  # 무료 모델 최우선
+            "gpt-oss:free",
             "anthropic/claude-3.5-sonnet",
             "openai/gpt-4o",
             "openai/gpt-4o-mini", 
@@ -263,7 +277,7 @@ class OpenRouterProvider(BaseProvider):
         self.model_row.set_visible(is_custom)
         if not is_custom:
             self.model = choice
-            self.data["model"] = self.model
+            self.data["model"] = choice
         # 항상 툴팁에 전체 모델명을 노출
         try:
             self.model_combo.set_tooltip_text(choice)
@@ -292,19 +306,6 @@ class OpenRouterProvider(BaseProvider):
     def open_documentation(self, widget):
         Gtk.show_uri(None, "https://openrouter.ai/keys", 0)
 
-
-class OpenRouterFreeProvider(OpenRouterProvider):
-    name = "OpenRouter Free"
-    description = _("무료로 사용 가능한 GPT-OSS 모델")
-    default_model = "gpt-oss:free"
-    
-    def __init__(self, app, window):
-        super().__init__(app, window)
-        # 데모용 API 키가 설정되지 않았다면 기본값 설정
-        if not self.data.get("api_key"):
-            demo_key = "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"
-            self.data["api_key"] = demo_key
-            self.api_key = demo_key
 
 
 class OpenRouterGPT4Provider(OpenRouterProvider):

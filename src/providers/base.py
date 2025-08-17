@@ -38,8 +38,8 @@ class BaseProvider:
         try:
             return self.app.data["providers"][self.slug]["data"]
         except KeyError:
-            # OpenRouter Free와 Ollama provider는 기본적으로 활성화
-            default_enabled = self.slug in ["openrouter-free", "ollama"]
+            # OpenRouter와 Ollama provider는 기본적으로 활성화
+            default_enabled = self.slug in ["openrouter", "ollama"]
             self.app.data["providers"][self.slug] = {
                 "enabled": default_enabled,
                 "data": {
