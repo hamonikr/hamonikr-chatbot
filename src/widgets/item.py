@@ -168,20 +168,28 @@ class Item(Gtk.Box):
             self.message_bubble.add_css_class("message-bubble-user")
             self.avatar.add_css_class("avatar-user")
             role = self.app.user_name
-            # 사용자 메시지에는 복사 버튼 숨김
+            # 사용자 메시지에는 복사 버튼과 모델 정보 숨김
             self.copy_button.set_visible(False)
+            self.model.set_visible(False)
         elif t == self.app.bot_name.lower() or t == "assistant": # Assistant
             self.avatar.set_icon_name("bot-symbolic")
             self.user.add_css_class("warning")
             role = self.app.bot_name
-            # Assistant 메시지에만 복사 버튼 표시
+            # Assistant 메시지에만 복사 버튼과 모델 정보 표시
             self.copy_button.set_visible(True)
+            self.model.set_visible(True)
+            # 모델 라벨이 확실히 보이도록 강제 설정
+            self.model.set_opacity(1.0)
+            self.model.set_sensitive(True)
         else:
             role = t
             self.copy_button.set_visible(False)
+            self.model.set_visible(False)
 
         self.timestamp.set_text(self.item.get("time", ""))
-        self.model.set_text(self.item.get("model", ""))
+        model_text = self.item.get("model", "")
+        
+        self.model.set_text(model_text)
 
         self.avatar.set_text(role)
         self.user.set_text(role)

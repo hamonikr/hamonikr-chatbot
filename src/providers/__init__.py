@@ -6,7 +6,7 @@ from .mistral import MistralLargeProvider
 from .gemini import GeminiProvider
 from .perplexity import PerplexityProvider
 from .groq import GroqProvider
-from .openrouter import OpenRouterProvider, OpenRouterFreeProvider
+from .openrouter import OpenRouterProvider
 from .ollama import (
     OllamaProvider,
 )
@@ -19,9 +19,6 @@ from .together import (
 )
 
 PROVIDERS = {
-    # 무료 프로바이더 (최우선)
-    OpenRouterFreeProvider,  # 무료 GPT-OSS 모델
-    
     # 통합형 프로바이더(벤더 단일 항목만 노출)
     OpenAIProvider,
     AnthropicProvider,
