@@ -551,3 +551,40 @@ msgstr "메시지 복사"
 #: src/views/window.blp:26
 msgid "Chatbot"
 msgstr "챗봇"
+
+# 파일 업로드 관련 번역
+msgid "Attach File"
+msgstr "파일 첨부"
+
+msgid "Select a file to attach"
+msgstr "첨부할 파일을 선택하세요"
+
+msgid "Text files"
+msgstr "텍스트 파일"
+
+msgid "All files"
+msgstr "모든 파일"
+
+msgid "File too large (max 5MB)"
+msgstr "파일이 너무 큽니다 (최대 5MB)"
+
+msgid "File encoding not supported. Please use UTF-8."
+msgstr "파일 인코딩이 지원되지 않습니다. UTF-8을 사용해주세요."
+
+msgid "Failed to open file"
+msgstr "파일을 열 수 없습니다"
+
+msgid "Failed to read file: %s"
+msgstr "파일을 읽을 수 없습니다: %s"
+
+msgid "Documents"
+msgstr "문서"
+
+msgid "Supported files"
+msgstr "지원되는 파일"
+
+msgid "Unsupported file format"
+msgstr "지원되지 않는 파일 형식"
+
+msgid "Failed to process file: %s"
+msgstr "파일 처리 실패: %s"

@@ -19,7 +19,7 @@ class OpenRouterProvider(BaseProvider):
         
         # API 키가 설정되지 않았다면 유효한 데모 키 자동 설정
         if not self.data.get("api_key"):
-            demo_key = "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"
+            demo_key = "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"
             self.data["api_key"] = demo_key
         
         self.api_key = self.data.get("api_key", "")

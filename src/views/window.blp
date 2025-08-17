@@ -228,16 +228,67 @@ template $BavarderWindow : Adw.ApplicationWindow {
             orientation: vertical;
             visible: true;
 
-            Gtk.Box {
+            Gtk.Box attached_file_box {
+              orientation: horizontal;
+              spacing: 8;
+              margin-start: 18;
+              margin-end: 18;
+              margin-top: 8;
+              margin-bottom: 8;
+              visible: false;
+              
+              Gtk.Box file_info_box {
+                orientation: horizontal;
+                spacing: 10;
+                hexpand: true;
+                margin-start: 8;
+                margin-end: 8;
+                margin-top: 4;
+                margin-bottom: 4;
+                
+                Gtk.Image file_icon {
+                  icon-name: "document-symbolic";
+                  icon-size: large;
+                  margin-start: 4;
+                  margin-end: 4;
+                  valign: center;
+                }
+                
+                Gtk.Label attached_file_label {
+                  label: "";
+                  hexpand: true;
+                  halign: start;
+                  valign: center;
+                  ellipsize: end;
+                  styles ["body"]
+                }
+              }
+              
+              Button remove_file_button {
+                icon-name: "edit-delete-symbolic";
+                tooltip-text: _("Remove file");
+                clicked => $on_remove_file();
+                valign: center;
+                styles ["circular", "flat"]
+              }
+              
+              styles ["card", "background"]
+            }
+
+            Gtk.Box toolbar_box {
               orientation: horizontal;
 
-              // Button emoji_button {
-              //   valign: end;
-              //   icon-name: "emoji-people-symbolic";
-              //   tooltip-text: _("Open Emoji Picker");
-              //   halign: start;
-              //   clicked => $on_emoji();
-              // }
+              Button file_upload_button {
+                valign: end;
+                icon-name: "document-open-symbolic";
+                tooltip-text: _("Attach File");
+                halign: start;
+                margin-start: 6;
+                margin-end: 6;
+                margin-bottom: 6;
+                clicked => $on_file_upload();
+                styles ["circular"]
+              }
 
               ScrolledWindow scrolled_window {
                 vexpand: true;
