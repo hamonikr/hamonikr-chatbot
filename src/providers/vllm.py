@@ -19,7 +19,7 @@ class VLLMProvider(BaseProvider):
         self.api_key = self.data.get("api_key", "")
         self.model = self.data.get("model", "meta-llama/Llama-3.2-3B-Instruct")
     
-    def ask(self, prompt, chat):
+    def ask(self, prompt, chat, stream=False, callback=None):
         # Convert chat history to OpenAI format (vLLM uses OpenAI-compatible API)
         messages = []
         for c in chat["content"][:-1]:  # Exclude current prompt

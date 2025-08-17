@@ -19,13 +19,13 @@ class GroqProvider(BaseProvider):
         self.api_key = self.data.get("api_key", "")
         self.model = self.data.get("model", self.default_model)
     
-    def ask(self, prompt, chat):
+    def ask(self, prompt, chat, stream=False, callback=None):
         if not self.api_key:
             return _("Please configure your Groq API key in preferences.")
         
         # Convert chat history to OpenAI format (Groq uses OpenAI-compatible API)
         messages = []
-        for c in chat["content"][:-1]:  # Exclude current prompt
+        for c in chat["content"]:
             if c["role"] == self.app.bot_name:
                 role = "assistant"
             else:
@@ -106,9 +106,9 @@ class GroqProvider(BaseProvider):
         self.model_combo.connect("notify::selected", self.on_model_combo_changed)
         self.rows.append(self.model_combo)
 
-        # Custom 입력
+        # Custom 입력용 EntryRow (Custom…일 때만 표시)
         self.model_row = Adw.EntryRow()
-        self.model_row.connect("apply", self.on_apply)
+        self.model_row.connect("apply", self.on_apply_model_custom)
         self.model_row.props.text = self.model if idx == len(model_choices) - 1 else ""
         self.model_row.props.title = _("Custom model id")
         self.model_row.set_show_apply_button(True)
@@ -120,8 +120,11 @@ class GroqProvider(BaseProvider):
     def on_apply(self, widget):
         self.api_key = self.api_row.get_text()
         self.data["api_key"] = self.api_key
-        self.model = self.model_row.get_text() or self.model
-        if self.model:
+
+    def on_apply_model_custom(self, widget):
+        text = self.model_row.get_text().strip()
+        if text:
+            self.model = text
             self.data["model"] = self.model
     
     def how_to_get_a_token(self):
@@ -178,16 +181,18 @@ class GroqProvider(BaseProvider):
         if not is_custom:
             self.model = choice
             self.data["model"] = self.model
-
-    def get_available_models(self):
-        try:
-            return self.fetch_models()
-        except Exception:
-            return [self.default_model]
+        # 항상 툴팁에 전체 모델명을 노출
         try:
             self.model_combo.set_tooltip_text(choice)
         except Exception:
             pass
+
+    def get_available_models(self):
+        """외부에서 사용할 수 있는 모델 목록을 반환합니다"""
+        try:
+            return self.fetch_models()
+        except Exception:
+            return [self.default_model]
 
 class GroqMixtralProvider(GroqProvider):
     name = "Groq Mixtral"
