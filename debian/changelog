@@ -7,6 +7,7 @@ hamonikr-chatbot (1.2.4) unstable; urgency=medium
   *   * remove greeting message and update UI titles
   *   * enhance chat appearance settings and update default provider
   *   * remove obsolete build and configuration files
+  *   * update OpenRouter provider and model settings
 
  -- HamoniKR <pkg@hamonikr.org>  Sat, 16 Aug 2025 21:09:44 +0900
 
