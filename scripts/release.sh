@@ -187,18 +187,22 @@ if [ -f "debian/changelog" ]; then
     
     # dch 명령어가 있는지 확인
     if command -v dch &> /dev/null; then
+        # 환경 변수 설정
+        export DEBEMAIL="${DEBEMAIL:-root@hamonikr.org}"
+        export DEBFULLNAME="${DEBFULLNAME:-HamoniKR}"
+        
         # dch를 사용하여 새 엔트리 추가
-        DEBEMAIL="${DEBEMAIL:-root@hamonikr.org}" \
-        DEBFULLNAME="${DEBFULLNAME:-HamoniKR}" \
-        dch --package hamonikr-chatbot --newversion "${NEW_VERSION#v}" --distribution "$DISTRIBUTION" --noedit "Release ${NEW_VERSION}"
+        dch --package hamonikr-chatbot --newversion "${NEW_VERSION#v}" --distribution "$DISTRIBUTION" "Release ${NEW_VERSION}"
         
         # 변경사항 추가
         if [ -n "$CHANGELOG_ENTRIES" ]; then
-            echo -e "$CHANGELOG_ENTRIES" | while IFS= read -r entry; do
-                if [ -n "$entry" ]; then
+            # echo를 사용하여 각 라인을 처리
+            while IFS= read -r entry; do
+                if [ -n "$entry" ] && [[ "$entry" =~ [*] ]]; then
+                    # * 로 시작하는 항목만 추가
                     dch --append "$entry"
                 fi
-            done
+            done <<< "$CHANGELOG_ENTRIES"
         fi
     else
         # dch가 없으면 수동으로 업데이트
