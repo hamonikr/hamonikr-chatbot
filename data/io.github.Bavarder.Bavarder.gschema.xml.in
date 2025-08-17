@@ -40,6 +40,9 @@
 		<key name="chat-line-height" type="d">
 			<default>1.6</default>
 		</key>
+		<key name="use-webkit-rendering" type="b">
+			<default>false</default>
+		</key>
 
 	</schema>
 </schemalist>

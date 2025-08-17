@@ -5,6 +5,11 @@ try:
 except ImportError:
     from constants import app_id, rootdir
 
+try:
+    from builtins import _  # provided by gettext.install in launcher
+except ImportError:
+    from gettext import gettext as _  # fallback when running out of tree
+
 @Gtk.Template(resource_path=f"{rootdir}/ui/save_dialog.ui")
 class SaveDialog(Adw.MessageDialog):
     __gtype_name__ = "SaveDialog"
@@ -40,9 +45,17 @@ class SaveDialog(Adw.MessageDialog):
         self.file_chooser.select_folder(self, None, self.on_filechooser_response)
     
     def on_filechooser_response(self, widget, response):
-        self.directory = self.file_chooser.select_folder_finish(response).get_path()
-        self.location.set_subtitle(self.directory)
-        self.update_save_status()
+        try:
+            # 파일 선택이 성공한 경우에만 처리
+            file = self.file_chooser.select_folder_finish(response)
+            if file:
+                self.directory = file.get_path()
+                self.location.set_subtitle(self.directory)
+                self.update_save_status()
+        except Exception as e:
+            # 사용자가 취소하거나 다른 오류가 발생한 경우 무시
+            print(f"File chooser cancelled or error occurred: {e}")
+            # 아무것도 하지 않고 그냥 넘어감
 
     @Gtk.Template.Callback()
     def on_entry_activated(self, widget, *args):

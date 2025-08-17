@@ -1,6 +1,8 @@
 import json
 import socket
 import requests
+import uuid
+import time
 from gettext import gettext as _
 from gi.repository import Gtk, Adw
 
@@ -14,13 +16,11 @@ class OpenRouterProvider(BaseProvider):
     api_key_title = "API Key"
     base_url = "https://openrouter.ai/api/v1"
     
+    # 기본 제공 API 키 (OpenRouter에서 제공하는 공용 키)
+    DEFAULT_API_KEY = "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"
+    
     def __init__(self, app, window):
         super().__init__(app, window)
-        
-        # API 키가 설정되지 않았다면 유효한 데모 키 자동 설정
-        if not self.data.get("api_key"):
-            demo_key = "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"
-            self.data["api_key"] = demo_key
         
         self.api_key = self.data.get("api_key", "")
         self.site_url = self.data.get("site_url", "https://github.com/hamonikr/hamonikr-chatbot")
@@ -32,10 +32,19 @@ class OpenRouterProvider(BaseProvider):
             self.data["model"] = self.default_model
         
 
+    def get_active_api_key(self):
+        """사용할 API 키를 반환합니다 (사용자 키 > 기본 키)"""
+        # 사용자가 설정한 키가 있으면 우선 사용
+        if self.api_key and self.api_key.strip():
+            return self.api_key
+        
+        # 없으면 기본 제공 키 사용
+        return self.DEFAULT_API_KEY
+
     
     def ask(self, prompt, chat, stream=False, callback=None):
-        if not self.api_key:
-            return _("Please configure your OpenRouter API key in preferences.")
+        # 사용할 API 키 결정 (사용자 키 > 기본 키)
+        active_key = self.get_active_api_key()
         
         # Convert chat history to OpenAI format
         messages = []
@@ -50,7 +59,7 @@ class OpenRouterProvider(BaseProvider):
         messages.append({"role": "user", "content": prompt})
         
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {active_key}",
             "Content-Type": "application/json",
             "HTTP-Referer": self.site_url,
             "X-Title": self.site_name
@@ -124,12 +133,11 @@ class OpenRouterProvider(BaseProvider):
     def fetch_models(self):
         """OpenRouter API에서 사용 가능한 모델 목록을 가져옵니다"""
         try:
-            if not self.api_key:
-                # API 키가 없으면 기본 모델 목록 반환
-                return self._get_fallback_models()
+            # 사용할 API 키 결정
+            active_key = self.get_active_api_key()
 
             headers = {
-                "Authorization": f"Bearer {self.api_key}",
+                "Authorization": f"Bearer {active_key}",
                 "Content-Type": "application/json",
                 "HTTP-Referer": self.site_url,
                 "X-Title": self.site_name
@@ -221,10 +229,25 @@ class OpenRouterProvider(BaseProvider):
     def get_settings_rows(self):
         self.rows = []
         
+        # API 키 설정 안내
+        info_label = Gtk.Label()
+        info_label.set_markup(
+            "<small>기본 제공 키를 사용하여 즉시 시작할 수 있습니다.\n"
+            "더 높은 사용량이 필요하면 개인 API 키를 설정하세요.</small>"
+        )
+        info_label.set_wrap(True)
+        info_label.add_css_class("dim-label")
+        self.rows.append(info_label)
+        
         self.api_row = Adw.PasswordEntryRow()
         self.api_row.connect("apply", self.on_apply)
         self.api_row.props.text = self.api_key or ""
-        self.api_row.props.title = self.api_key_title
+        self.api_row.props.title = f"{self.api_key_title} (선택사항)"
+        try:
+            self.api_row.props.subtitle = "비워두면 기본 키 사용"
+        except AttributeError:
+            # subtitle 속성이 없는 GTK 버전의 경우 무시
+            pass
         self.api_row.set_show_apply_button(True)
         self.api_row.add_suffix(self.how_to_get_a_token())
         self.rows.append(self.api_row)

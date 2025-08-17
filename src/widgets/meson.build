@@ -4,6 +4,7 @@ widgets_sources = [
   '__init__.py',
   'code_block.py',
   'item.py',
+  'markdown_renderer.py',
   'thread_item.py',
   'download_row.py',
   'model_item.py',
