@@ -1,7 +1,11 @@
 from gi.repository import Gtk, Adw, GLib
 
-from ..constants import app_id, rootdir
-from ..hamonikr_threading import KillableThread
+try:
+    from ..constants import app_id, rootdir
+    from ..hamonikr_threading import KillableThread
+except ImportError:
+    from constants import app_id, rootdir
+    from hamonikr_threading import KillableThread
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/download_row.ui")
 class DownloadRow(Adw.ActionRow):

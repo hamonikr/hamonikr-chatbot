@@ -1,6 +1,9 @@
 from gi.repository import Gtk, Adw, Gio, GLib
 
-from ..constants import app_id, rootdir
+try:
+    from ..constants import app_id, rootdir
+except ImportError:
+    from constants import app_id, rootdir
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/thread_item.ui")
 class ThreadItem(Gtk.Box):

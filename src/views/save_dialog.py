@@ -1,6 +1,9 @@
 from gi.repository import Gtk, Adw, Gio, Gdk
 
-from ..constants import app_id, rootdir
+try:
+    from ..constants import app_id, rootdir
+except ImportError:
+    from constants import app_id, rootdir
 
 @Gtk.Template(resource_path=f"{rootdir}/ui/save_dialog.ui")
 class SaveDialog(Adw.MessageDialog):

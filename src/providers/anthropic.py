@@ -158,35 +158,55 @@ class AnthropicBaseProvider(BaseProvider):
             pass
 
     def fetch_presets(self):
-        # 최신 라인업(Anthropic API 모델명) - Alias + Version 포함
-        presets_in_order = [
-            # Opus 4.1
-            "claude-opus-4-1",            # alias
-            "claude-opus-4-1-20250805",  # version
-            # Opus 4
-            "claude-opus-4-0",            # alias
-            "claude-opus-4-20250514",    # version
-            # Sonnet 4
-            "claude-sonnet-4-0",         # alias
-            "claude-sonnet-4-20250514",  # version
-            # Sonnet 3.7
-            "claude-3-7-sonnet-latest",  # alias
-            "claude-3-7-sonnet-20250219",# version
-            # Sonnet 3.5
-            "claude-3-5-sonnet-latest",  # alias
-            "claude-3-5-sonnet-20241022",# version
-            # Haiku 3.5
-            "claude-3-5-haiku-latest",   # alias
-            "claude-3-5-haiku-20241022", # version
+        """Anthropic API에서 동적으로 모델 목록을 가져옵니다"""
+        try:
+            if not self.data.get("api_key"):
+                # API 키가 없으면 기본 모델 목록 반환
+                return self._get_fallback_models()
+
+            headers = {
+                "x-api-key": self.data.get("api_key", ""),
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            }
+            
+            # Anthropic API의 모델 목록 조회
+            resp = requests.get(
+                "https://api.anthropic.com/v1/models",
+                headers=headers,
+                timeout=10,
+            )
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                models = []
+                for model in data.get("data", []):
+                    model_id = model.get("id")
+                    if model_id:
+                        models.append(model_id)
+                
+                # 정렬하여 반환 (최신 모델 우선)
+                sorted_models = sorted(models, reverse=True)
+                return sorted_models or self._get_fallback_models()
+            else:
+                return self._get_fallback_models()
+                
+        except Exception:
+            return self._get_fallback_models()
+    
+    def _get_fallback_models(self):
+        """API 조회 실패 시 사용할 기본 모델 목록"""
+        return [
+            "claude-opus-4-1-20250805",
+            "claude-opus-4-20250514", 
+            "claude-sonnet-4-20250514",
+            "claude-3-7-sonnet-20250219",
+            "claude-3-5-sonnet-20241022",
+            "claude-3-5-haiku-20241022",
+            "claude-3-5-sonnet-20240620",
+            "claude-3-haiku-20240307",
+            "claude-3-opus-20240229",
         ]
-        # 중복 제거(순서 유지)
-        seen = set()
-        deduped = []
-        for m in presets_in_order:
-            if m not in seen:
-                seen.add(m)
-                deduped.append(m)
-        return deduped
 
     def get_available_models(self):
         # Expose presets as available models list

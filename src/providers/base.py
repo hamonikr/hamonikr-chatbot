@@ -3,6 +3,7 @@ import re
 from typing import List, Dict
 from gi.repository import Gtk, Adw, GLib
 from enum import Enum
+from gettext import gettext as _
 
 class ProviderType(Enum):
     IMAGE = _("Image")

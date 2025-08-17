@@ -1,7 +1,11 @@
 from gi.repository import Gtk, Adw, Gio, GtkSource, Gdk
 
-from ..constants import app_id, rootdir
-from .save_dialog import SaveDialog
+try:
+    from ..constants import app_id, rootdir
+    from .save_dialog import SaveDialog
+except ImportError:
+    from constants import app_id, rootdir
+    from save_dialog import SaveDialog
 
 GtkSource.init()
 
