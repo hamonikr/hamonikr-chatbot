@@ -3,7 +3,10 @@ import re
 from typing import List, Dict
 from gi.repository import Gtk, Adw, GLib
 
-from ..constants import app_id, rootdir
+try:
+    from ..constants import app_id, rootdir
+except ImportError:
+    from constants import app_id, rootdir
 
     
 @Gtk.Template(resource_path=f"{rootdir}/ui/model_item.ui")

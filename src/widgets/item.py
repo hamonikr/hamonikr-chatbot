@@ -6,8 +6,12 @@ import base64
 
 from PIL import Image, UnidentifiedImageError
 
-from ..constants import app_id, rootdir
-from .code_block import CodeBlock
+try:
+    from ..constants import app_id, rootdir
+    from .code_block import CodeBlock
+except ImportError:
+    from constants import app_id, rootdir
+    from code_block import CodeBlock
 
 try:
     from builtins import _  # provided by gettext.install in launcher
@@ -96,59 +100,15 @@ class Item(Gtk.Box):
             else:
                 self.image = self.content_text
         except Exception:
-            self.convert_content_to_pango()
-
-            result = ""
-            is_code = False
-            for line in self.content_markup:
-                if isinstance(line, str):
-                    if  "<tt></tt>`" in line.strip():
-                        if is_code:
-                            is_code = False
-                        else:
-                            is_code = True
-                        continue
-                if is_code or not isinstance(line, str):
-                    label = Gtk.Label()
-                    label.set_use_markup(True)
-                    label.set_wrap(True)
-                    label.set_xalign(0)
-                    label.set_wrap_mode(Pango.WrapMode.WORD)
-                    label.set_markup(result)
-                    label.set_justify(Gtk.Justification.LEFT)
-                    label.set_valign(Gtk.Align.START)
-                    label.set_hexpand(True)
-                    label.set_halign(Gtk.Align.START)
-                    label.set_selectable(True)  # 텍스트 선택 가능하게 설정
-                    label.add_css_class("message-content")  # 폰트 설정을 위한 CSS 클래스 추가
-                    self.content.append(label)
-
-                    if not isinstance(line, str):
-                        result = "\n".join(line)
-                    else:
-                        result = line.strip()
-
-                    self.content.append(CodeBlock(result))
-                    result = ""
-                else: 
-                    result += f"{line}\n"
-                
+            # 어시스턴트 메시지이고 마크다운 콘텐츠가 있으면 WebView 렌더링 사용
+            role = self.item["role"].lower()
+            if (role == self.app.bot_name.lower() or role == "assistant") and self._has_markdown_content():
+                self._render_with_webview()
             else:
-                if not result.strip() == "<tt></tt>`":
-                    label = Gtk.Label()
-                    label.set_use_markup(True)
-                    label.set_wrap(True)
-                    label.set_xalign(0)
-                    label.set_wrap_mode(Pango.WrapMode.WORD)
-                    label.set_markup(result)
-                    label.set_justify(Gtk.Justification.LEFT)
-                    label.set_valign(Gtk.Align.START)
-                    label.set_hexpand(True)
-                    label.set_halign(Gtk.Align.START)
-                    label.set_selectable(True)  # 텍스트 선택 가능하게 설정
-                    label.add_css_class("message-content")  # 폰트 설정을 위한 CSS 클래스 추가
-                    self.content.append(label)
+                # 기존 방식으로 렌더링 (사용자 메시지 또는 단순 텍스트)
+                self._render_with_pango()
         else:
+            # 이미지인 경우의 처리
             picture = Gtk.Picture()
             picture.set_halign(Gtk.Align.CENTER)
             picture.set_can_shrink(True)
@@ -161,6 +121,403 @@ class Item(Gtk.Box):
             self.image.save("/tmp/image.png")
             picture.set_file(Gio.File.new_for_path("/tmp/image.png"))
             self.content.append(picture)
+                
+    def _has_markdown_content(self):
+        """마크다운 콘텐츠가 포함되어 있는지 확인"""
+        if not self.content_text or not isinstance(self.content_text, str):
+            return False
+        
+        markdown_indicators = [
+            r'```',  # 코드 블록
+            r'`[^`]+`',  # 인라인 코드
+            r'#{1,6}\s',  # 헤딩
+            r'\*\*[^*]+\*\*',  # 볼드
+            r'\*[^*]+\*',  # 이탤릭
+            r'\[[^\]]+\]\([^)]+\)',  # 링크
+            r'^\s*[\*\-\+]\s',  # 리스트
+            r'^\s*\d+\.\s',  # 번호 목록
+            r'^\s*>',  # 인용문
+            r'^\s*\|.*\|\s*$',  # 테이블 행
+            r'^\s*\|[\s\-\:]*\|\s*$',  # 테이블 구분자
+        ]
+        
+        content = str(self.content_text)
+        for pattern in markdown_indicators:
+            if re.search(pattern, content, re.MULTILINE):
+                return True
+        return False
+    
+    def _render_with_webview(self):
+        """개선된 마크다운 렌더링 (WebKit 사용 가능시만)"""
+        try:
+            # WebKit 사용 가능한지 확인
+            try:
+                from gi.repository import WebKit2
+                webkit_available = True
+            except ImportError:
+                webkit_available = False
+            
+            if webkit_available:
+                # WebKit 기반 렌더링은 일단 비활성화하고 개선된 Pango 사용
+                self._render_enhanced_pango()
+            else:
+                # WebKit 사용 불가시 개선된 Pango 렌더링 사용
+                self._render_enhanced_pango()
+            
+        except Exception as e:
+            # 모든 실패 시 기존 방식으로 폴백
+            print(f"Enhanced rendering failed, falling back to basic Pango: {e}")
+            self._render_with_pango()
+    
+    def _render_enhanced_pango(self):
+        """개선된 Pango 마크업 렌더링 (마크다운 기본 지원)"""
+        try:
+            # 마크다운 테이블을 먼저 수동으로 처리
+            processed_content = self._process_markdown_tables(self.content_text)
+            
+            import markdown
+            
+            # 기본 마크다운만 사용 (확장 사용 시 오류 발생)
+            md = markdown.Markdown()
+            html_content = md.convert(processed_content)
+            
+            # HTML을 간단한 Pango 마크업으로 변환
+            pango_markup = self._html_to_pango(html_content)
+            
+            # 라벨 생성
+            label = Gtk.Label()
+            label.set_use_markup(True)
+            label.set_wrap(True)
+            label.set_xalign(0)
+            label.set_wrap_mode(Pango.WrapMode.WORD)
+            label.set_markup(pango_markup)
+            label.set_justify(Gtk.Justification.LEFT)
+            label.set_valign(Gtk.Align.START)
+            label.set_hexpand(True)
+            label.set_halign(Gtk.Align.START)
+            label.set_selectable(True)
+            label.add_css_class("message-content")
+            
+            self.content.append(label)
+            
+        except Exception as e:
+            print(f"Enhanced Pango rendering failed: {e}")
+            # 최종 폴백
+            self._render_with_pango()
+    
+    def _html_to_pango(self, html_content):
+        """HTML을 간단한 Pango 마크업으로 변환"""
+        # 기본적인 HTML to Pango 변환
+        content = html_content
+        
+        # 테이블 처리 (먼저 처리해야 함)
+        content = self._process_tables(content)
+        
+        # HTML 태그를 Pango 마크업으로 변환
+        content = re.sub(r'<h[1-6]>(.*?)</h[1-6]>', r'<big><b>\1</b></big>', content)
+        content = re.sub(r'<strong>(.*?)</strong>', r'<b>\1</b>', content)
+        content = re.sub(r'<b>(.*?)</b>', r'<b>\1</b>', content)
+        content = re.sub(r'<em>(.*?)</em>', r'<i>\1</i>', content)
+        content = re.sub(r'<i>(.*?)</i>', r'<i>\1</i>', content)
+        content = re.sub(r'<code>(.*?)</code>', r'<tt>\1</tt>', content)
+        content = re.sub(r'<pre><code>(.*?)</code></pre>', r'<tt>\1</tt>', content, flags=re.DOTALL)
+        
+        # 리스트 처리
+        content = re.sub(r'<ul>', '', content)
+        content = re.sub(r'</ul>', '', content)
+        content = re.sub(r'<ol>', '', content)
+        content = re.sub(r'</ol>', '', content)
+        content = re.sub(r'<li>(.*?)</li>', r'• \1', content)
+        
+        # 단락 처리
+        content = re.sub(r'<p>(.*?)</p>', r'\1\n', content)
+        
+        # 링크 처리 (기본적인 텍스트만)
+        content = re.sub(r'<a[^>]*>(.*?)</a>', r'\1', content)
+        
+        # 나머지 HTML 태그 제거
+        content = re.sub(r'<[^>]+>', '', content)
+        
+        # HTML 엔티티 디코딩
+        content = content.replace('&lt;', '<')
+        content = content.replace('&gt;', '>')
+        content = content.replace('&quot;', '"')
+        content = content.replace('&amp;', '&')  # &amp;는 마지막에 처리
+        
+        # Pango 마크업을 위한 특수문자 이스케이프 (중요!)
+        content = self._escape_pango_markup(content)
+        
+        return content.strip()
+    
+    def _escape_pango_markup(self, text):
+        """Pango 마크업에서 안전하게 사용할 수 있도록 특수문자 이스케이프"""
+        # Pango 마크업에서 문제가 되는 문자들을 이스케이프
+        # 주의: 이미 마크업 태그는 처리된 상태이므로 내용만 이스케이프
+        
+        # 텍스트를 마크업 태그와 일반 텍스트로 분리하여 처리
+        parts = []
+        current_pos = 0
+        
+        # 마크업 태그 패턴 (<b>, <i>, <tt>, <big> 등)
+        markup_pattern = r'<(/?(b|i|tt|big|small|u|s|sub|sup|span[^>]*))>'
+        
+        for match in re.finditer(markup_pattern, text):
+            # 태그 이전의 텍스트 (이스케이프 필요)
+            before_text = text[current_pos:match.start()]
+            if before_text:
+                escaped_text = before_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                parts.append(escaped_text)
+            
+            # 태그 자체 (이스케이프 불필요)
+            parts.append(match.group(0))
+            current_pos = match.end()
+        
+        # 마지막 남은 텍스트 (이스케이프 필요)
+        remaining_text = text[current_pos:]
+        if remaining_text:
+            escaped_text = remaining_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            parts.append(escaped_text)
+        
+        return ''.join(parts)
+    
+    def _process_markdown_tables(self, content):
+        """마크다운 테이블을 HTML 테이블로 변환"""
+        lines = content.split('\n')
+        result_lines = []
+        i = 0
+        
+        while i < len(lines):
+            line = lines[i].strip()
+            
+            # 테이블 행인지 확인 (|로 시작하고 끝남)
+            if line.startswith('|') and line.endswith('|'):
+                # 테이블 시작
+                table_lines = []
+                
+                # 테이블 행들 수집
+                while i < len(lines) and lines[i].strip().startswith('|') and lines[i].strip().endswith('|'):
+                    table_lines.append(lines[i].strip())
+                    i += 1
+                
+                # 테이블 HTML로 변환
+                if len(table_lines) >= 2:  # 최소 헤더와 구분자 필요
+                    html_table = self._convert_table_to_html(table_lines)
+                    result_lines.append(html_table)
+                else:
+                    # 테이블이 아니면 원본 추가
+                    result_lines.extend(table_lines)
+                
+                continue
+            else:
+                result_lines.append(lines[i])
+                i += 1
+        
+        return '\n'.join(result_lines)
+    
+    def _convert_table_to_html(self, table_lines):
+        """마크다운 테이블 행들을 HTML 테이블로 변환"""
+        if len(table_lines) < 2:
+            return '\n'.join(table_lines)
+        
+        # 헤더 행 파싱
+        header_line = table_lines[0]
+        headers = [cell.strip() for cell in header_line.split('|')[1:-1]]  # 양쪽 끝 | 제거
+        
+        # 구분자 행 확인 (선택적)
+        separator_line = table_lines[1] if len(table_lines) > 1 else ""
+        is_separator = all(c in '-:|' for c in separator_line.replace(' ', ''))
+        
+        # 데이터 행들
+        data_start = 2 if is_separator else 1
+        data_lines = table_lines[data_start:]
+        
+        # HTML 생성
+        html = ["<table>"]
+        
+        # 헤더
+        if headers:
+            html.append("<thead><tr>")
+            for header in headers:
+                html.append(f"<th>{header}</th>")
+            html.append("</tr></thead>")
+        
+        # 데이터
+        if data_lines:
+            html.append("<tbody>")
+            for line in data_lines:
+                cells = [cell.strip() for cell in line.split('|')[1:-1]]  # 양쪽 끝 | 제거
+                html.append("<tr>")
+                for cell in cells:
+                    html.append(f"<td>{cell}</td>")
+                html.append("</tr>")
+            html.append("</tbody>")
+        
+        html.append("</table>")
+        
+        return ''.join(html)
+    
+    def _process_tables(self, content):
+        """HTML 테이블을 텍스트 형태로 변환"""
+        import re
+        
+        # 테이블 패턴 찾기
+        table_pattern = r'<table[^>]*>(.*?)</table>'
+        
+        def format_table(match):
+            table_content = match.group(1)
+            
+            # 테이블 헤더와 행 추출
+            headers = []
+            rows = []
+            
+            # 헤더 추출 (thead 또는 첫 번째 tr)
+            thead_match = re.search(r'<thead[^>]*>(.*?)</thead>', table_content, re.DOTALL)
+            if thead_match:
+                header_content = thead_match.group(1)
+                th_matches = re.findall(r'<th[^>]*>(.*?)</th>', header_content, re.DOTALL)
+                headers = [re.sub(r'<[^>]+>', '', th).strip() for th in th_matches]
+            else:
+                # thead가 없으면 첫 번째 tr에서 th 찾기
+                first_tr = re.search(r'<tr[^>]*>(.*?)</tr>', table_content, re.DOTALL)
+                if first_tr:
+                    th_matches = re.findall(r'<th[^>]*>(.*?)</th>', first_tr.group(1), re.DOTALL)
+                    if th_matches:
+                        headers = [re.sub(r'<[^>]+>', '', th).strip() for th in th_matches]
+            
+            # 데이터 행 추출
+            tbody_content = table_content
+            tbody_match = re.search(r'<tbody[^>]*>(.*?)</tbody>', table_content, re.DOTALL)
+            if tbody_match:
+                tbody_content = tbody_match.group(1)
+            
+            tr_matches = re.findall(r'<tr[^>]*>(.*?)</tr>', tbody_content, re.DOTALL)
+            for tr in tr_matches:
+                td_matches = re.findall(r'<td[^>]*>(.*?)</td>', tr, re.DOTALL)
+                if td_matches:  # td가 있는 행만 (헤더 행 제외)
+                    row_data = [re.sub(r'<[^>]+>', '', td).strip() for td in td_matches]
+                    rows.append(row_data)
+            
+            # 테이블 포맷팅
+            if not headers and not rows:
+                return ""
+            
+            # 컬럼 너비 계산
+            all_data = [headers] + rows if headers else rows
+            if not all_data:
+                return ""
+            
+            max_cols = max(len(row) for row in all_data) if all_data else 0
+            col_widths = []
+            
+            for col in range(max_cols):
+                max_width = 0
+                for row in all_data:
+                    if col < len(row):
+                        max_width = max(max_width, len(str(row[col])))
+                col_widths.append(min(max_width, 20))  # 최대 20자로 제한
+            
+            # 테이블 텍스트 생성
+            result = []
+            
+            # 헤더
+            if headers:
+                header_line = "┌" + "┬".join("─" * (w + 2) for w in col_widths) + "┐"
+                result.append(header_line)
+                
+                header_cells = []
+                for i, header in enumerate(headers):
+                    if i < len(col_widths):
+                        cell = f" {header:<{col_widths[i]}} "
+                        header_cells.append(cell)
+                result.append("│" + "│".join(header_cells) + "│")
+                
+                separator = "├" + "┼".join("─" * (w + 2) for w in col_widths) + "┤"
+                result.append(separator)
+            
+            # 데이터 행
+            for row_idx, row in enumerate(rows):
+                row_cells = []
+                for i, cell in enumerate(row):
+                    if i < len(col_widths):
+                        # 긴 텍스트는 잘라내기
+                        cell_text = str(cell)
+                        if len(cell_text) > col_widths[i]:
+                            cell_text = cell_text[:col_widths[i]-1] + "…"
+                        cell_formatted = f" {cell_text:<{col_widths[i]}} "
+                        row_cells.append(cell_formatted)
+                
+                if not headers and row_idx == 0:
+                    # 헤더가 없으면 첫 번째 행 전에 상단 경계
+                    top_line = "┌" + "┬".join("─" * (w + 2) for w in col_widths) + "┐"
+                    result.append(top_line)
+                
+                result.append("│" + "│".join(row_cells) + "│")
+            
+            # 하단 경계
+            bottom_line = "└" + "┴".join("─" * (w + 2) for w in col_widths) + "┘"
+            result.append(bottom_line)
+            
+            return "\n".join(result) + "\n"
+        
+        # 모든 테이블 변환
+        content = re.sub(table_pattern, format_table, content, flags=re.DOTALL)
+        
+        return content
+    
+    def _render_with_pango(self):
+        """기존 Pango 마크업을 사용한 렌더링"""
+        self.convert_content_to_pango()
+
+        result = ""
+        is_code = False
+        for line in self.content_markup:
+            if isinstance(line, str):
+                if  "<tt></tt>`" in line.strip():
+                    if is_code:
+                        is_code = False
+                    else:
+                        is_code = True
+                    continue
+            if is_code or not isinstance(line, str):
+                label = Gtk.Label()
+                label.set_use_markup(True)
+                label.set_wrap(True)
+                label.set_xalign(0)
+                label.set_wrap_mode(Pango.WrapMode.WORD)
+                label.set_markup(result)
+                label.set_justify(Gtk.Justification.LEFT)
+                label.set_valign(Gtk.Align.START)
+                label.set_hexpand(True)
+                label.set_halign(Gtk.Align.START)
+                label.set_selectable(True)  # 텍스트 선택 가능하게 설정
+                label.add_css_class("message-content")  # 폰트 설정을 위한 CSS 클래스 추가
+                self.content.append(label)
+
+                if not isinstance(line, str):
+                    result = "\n".join(line)
+                else:
+                    result = line.strip()
+
+                self.content.append(CodeBlock(result))
+                result = ""
+            else: 
+                result += f"{line}\n"
+            
+        else:
+            if not result.strip() == "<tt></tt>`":
+                label = Gtk.Label()
+                label.set_use_markup(True)
+                label.set_wrap(True)
+                label.set_xalign(0)
+                label.set_wrap_mode(Pango.WrapMode.WORD)
+                label.set_markup(result)
+                label.set_justify(Gtk.Justification.LEFT)
+                label.set_valign(Gtk.Align.START)
+                label.set_hexpand(True)
+                label.set_halign(Gtk.Align.START)
+                label.set_selectable(True)  # 텍스트 선택 가능하게 설정
+                label.add_css_class("message-content")  # 폰트 설정을 위한 CSS 클래스 추가
+                self.content.append(label)
 
         t = self.item["role"].lower()
 

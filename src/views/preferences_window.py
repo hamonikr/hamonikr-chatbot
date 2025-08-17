@@ -1,9 +1,15 @@
 from gi.repository import Gtk, Adw, Gio, Pango
 
-from ..constants import app_id, rootdir
-from ..providers.provider_item import Provider
-from ..widgets.model_item import Model
-from ..widgets.download_row import DownloadRow
+try:
+    from ..constants import app_id, rootdir
+    from ..providers.provider_item import Provider
+    from ..widgets.model_item import Model
+    from ..widgets.download_row import DownloadRow
+except ImportError:
+    from constants import app_id, rootdir
+    from providers.provider_item import Provider
+    from widgets.model_item import Model
+    from widgets.download_row import DownloadRow
 
 import gettext
 _ = gettext.gettext

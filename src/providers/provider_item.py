@@ -3,8 +3,12 @@ import re
 from typing import List, Dict
 from gi.repository import Gtk, Adw, GLib
 
-from ..constants import app_id, rootdir
-from .base import  ProviderType
+try:
+    from ..constants import app_id, rootdir
+    from .base import ProviderType
+except ImportError:
+    from constants import app_id, rootdir
+    from base import ProviderType
     
 @Gtk.Template(resource_path=f"{rootdir}/ui/provider_item.ui")
 class Provider(Adw.ExpanderRow):

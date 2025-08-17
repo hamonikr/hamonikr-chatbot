@@ -21,28 +21,21 @@ class BaseOpenAIImageProvider(BaseImageProvider):
         super().__init__(app, window)
 
         # API 키가 없어도 안전하게 초기화되도록 수정
-        api_key = os.environ.get("OPENAI_API_KEY") or "dummy-key"
+        api_key = os.environ.get("OPENAI_API_KEY") or self.data.get("api_key") or "sk-dummy-key"
         
         try:
-            self.client = OpenAI(
-                api_key=api_key,
-            )
+            self.client = OpenAI(api_key=api_key)
         except Exception as e:
-            # OpenAI 클라이언트 초기화 실패 시 더미 클라이언트로 대체
-            try:
-                self.client = OpenAI(
-                    api_key="dummy-key",
-                )
-            except Exception:
-                # 완전히 실패한 경우 None으로 설정
-                self.client = None
+            print(f"OpenAI 이미지 클라이언트 초기화 실패: {e}")
+            # 완전히 실패한 경우 None으로 설정
+            self.client = None
 
         if self.client and self.data.get("api_key"):
             self.client.api_key = self.data["api_key"]
         if self.client and self.data.get("api_base"):
             self.client.base_url = self.data["api_base"]
 
-    def ask(self, prompt, chat):
+    def ask(self, prompt, chat, stream=False):
         if not self.client:
             return _("OpenAI client not initialized. Please check your API key in preferences.")
         
@@ -135,7 +128,9 @@ class BaseOpenAIImageProvider(BaseImageProvider):
         # 클라이언트가 없으면 새로 생성 시도
         if not self.client and api_key:
             try:
-                self.client = OpenAI(api_key=api_key)
+                self.client = OpenAI(
+                    api_key=api_key
+                )
             except Exception:
                 # 실패해도 계속 진행
                 pass

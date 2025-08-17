@@ -1,6 +1,9 @@
 from gi.repository import Gtk, GtkSource, Adw, Xdp
 
-from ..constants import app_id, rootdir
+try:
+    from ..constants import app_id, rootdir
+except ImportError:
+    from constants import app_id, rootdir
 
 import subprocess
 from subprocess import SubprocessError, CompletedProcess

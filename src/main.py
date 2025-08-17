@@ -34,11 +34,25 @@ try:
     from builtins import _  # provided by gettext.install in launcher
 except Exception:
     from gettext import gettext as _  # fallback when running out of tree
-from .views.window import BavarderWindow
-from .views.about_window import AboutWindow
-from .views.preferences_window import PreferencesWindow
-from .constants import app_id
-from .providers import PROVIDERS
+try:
+    # Try relative imports first (for package mode)
+    from .views.window import BavarderWindow
+    from .views.about_window import AboutWindow
+    from .views.preferences_window import PreferencesWindow
+    from .constants import app_id
+except ImportError:
+    # Fall back to absolute imports (for direct execution)
+    import sys
+    import os
+    sys.path.insert(0, os.path.dirname(__file__))
+    from views.window import BavarderWindow
+    from views.about_window import AboutWindow
+    from views.preferences_window import PreferencesWindow
+    from constants import app_id
+try:
+    from .providers import PROVIDERS
+except ImportError:
+    from providers import PROVIDERS
 
 import json
 

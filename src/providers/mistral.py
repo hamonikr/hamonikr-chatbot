@@ -23,7 +23,9 @@ class MistralBaseProvider(BaseProvider):
         messages = []
         for c in chat["content"]:
             role = "assistant" if c["role"] == self.app.bot_name else "user"
-            messages.append({"role": role, "content": c["content"]})
+            content = c["content"].strip()
+            if content:  # 빈 메시지 제외
+                messages.append({"role": role, "content": content})
 
         if not self.data.get("api_key"):
             return _("Please configure your Mistral API key in preferences.")
@@ -33,13 +35,17 @@ class MistralBaseProvider(BaseProvider):
             "Content-Type": "application/json",
         }
 
+        # 새 프롬프트를 추가
+        messages.append({"role": "user", "content": prompt})
+
         payload = {
             "model": self.model,
-            "messages": messages + [{"role": "user", "content": prompt}],
+            "messages": messages,
         }
         
         if stream and callback:
             payload["stream"] = True
+
 
         try:
             resp = requests.post(
@@ -54,112 +60,90 @@ class MistralBaseProvider(BaseProvider):
                 # Handle streaming response
                 if resp.status_code >= 400:
                     try:
-                        data = resp.json()
-                        error_info = data.get("error", {})
-                        error_msg = error_info.get("message", str(data))
-                        error_code = error_info.get("code", "")
+                        error_text = resp.text
+                        try:
+                            data = resp.json()
+                            error_info = data.get("error", {})
+                            error_msg = error_info.get("message", str(data))
+                            error_code = error_info.get("code", "")
+                        except:
+                            error_msg = error_text
+                            error_code = ""
                         
-                        # 서비스 장애 특별 처리
-                        if "Service unavailable" in error_msg or error_code == "3600":
-                            return "Mistral API Streaming Error: Service temporarily unavailable. Trying non-streaming mode..."
+                        if resp.status_code == 500:
+                            return _("Mistral AI server error. This may be due to invalid message format. Please try again.")
+                        elif "Service unavailable" in error_msg or error_code == "3600":
+                            return _("Mistral AI service is temporarily unavailable. Please try again in a few moments.")
+                        elif resp.status_code == 401:
+                            return _("Your Mistral API key is invalid, please check your preferences.")
+                        elif resp.status_code == 429:
+                            return _("Rate limit exceeded. Please try again later.")
                         
-                        return f"Mistral API Streaming Error: {error_msg}"
-                    except:
-                        return f"Mistral API Streaming Error: {resp.status_code} - {resp.text}"
+                        return f"Mistral API Error ({resp.status_code}): {error_msg}"
+                    except Exception as e:
+                        return f"Mistral API Error: {resp.status_code} - {resp.text}"
                 
                 full_response = ""
-                try:
-                    for line in resp.iter_lines():
-                        if line:
-                            line = line.decode('utf-8')
-                            if line.startswith('data: '):
-                                data_str = line[6:]
-                                if data_str == '[DONE]':
-                                    break
-                                try:
-                                    data = json.loads(data_str)
-                                    if "choices" in data and len(data["choices"]) > 0:
-                                        delta = data["choices"][0].get("delta", {})
-                                        if "content" in delta:
-                                            content = delta["content"]
-                                            full_response += content
-                                            callback(content)
-                                except json.JSONDecodeError:
-                                    continue
-                    
-                    if not full_response.strip():
-                        return "Mistral API Error: Empty streaming response"
-                    
-                    return full_response
-                except Exception as e:
-                    return f"Mistral API Streaming Error: {str(e)}"
+                for line in resp.iter_lines():
+                    if line:
+                        line = line.decode('utf-8')
+                        if line.startswith('data: '):
+                            data_str = line[6:]
+                            if data_str == '[DONE]':
+                                break
+                            try:
+                                data = json.loads(data_str)
+                                if "choices" in data and data["choices"]:
+                                    delta = data["choices"][0].get("delta", {})
+                                    if "content" in delta:
+                                        content = delta["content"]
+                                        full_response += content
+                                        callback(content)
+                            except json.JSONDecodeError:
+                                continue
+                return full_response
             else:
                 # Regular non-streaming response
                 if resp.status_code >= 400:
                     try:
-                        data = resp.json()
-                        error_info = data.get("error", {})
-                        error_msg = error_info.get("message", str(data))
-                        error_code = error_info.get("code", "")
+                        error_text = resp.text
+                        try:
+                            data = resp.json()
+                            error_info = data.get("error", {})
+                            error_msg = error_info.get("message", str(data))
+                            error_code = error_info.get("code", "")
+                        except:
+                            error_msg = error_text
+                            error_code = ""
                         
-                        # 서비스 장애 특별 처리
-                        if "Service unavailable" in error_msg or error_code == "3600":
-                            return _("Mistral AI service is temporarily unavailable. Please try again later.")
+                        if resp.status_code == 500:
+                            return _("Mistral AI server error. This may be due to invalid message format. Please try again.")
                         elif resp.status_code == 401:
                             return _("Your Mistral API key is invalid, please check your preferences.")
                         elif resp.status_code == 429:
                             return _("Rate limit exceeded. Please try again later.")
                         elif resp.status_code == 402:
                             return _("Insufficient credits. Please add credits to your Mistral account.")
+                        elif "Service unavailable" in error_msg or error_code == "3600":
+                            return _("Mistral AI service is temporarily unavailable. Please try again in a few moments.")
                         
-                        return f"Mistral API Error: {error_msg}"
+                        return f"Mistral API Error ({resp.status_code}): {error_msg}"
                     except:
                         return f"Mistral API Error: {resp.status_code} - {resp.text}"
                 
-                try:
-                    data = resp.json()
-                    # Debug: 응답 구조 확인
-                    if not data.get("choices"):
-                        return f"Mistral API Error: No choices in response. Response: {data}"
-                    
-                    choice = data.get("choices", [{}])[0]
-                    if not choice.get("message"):
-                        return f"Mistral API Error: No message in choice. Choice: {choice}"
-                    
-                    message = choice.get("message", {})
-                    content = message.get("content", "").strip()
-                    
-                    if not content:
-                        return f"Mistral API Error: Empty content. Message: {message}"
-                    
-                    return content
-                except json.JSONDecodeError as e:
-                    return f"Mistral API Error: Invalid JSON response - {str(e)}"
+                data = resp.json()
+                return data["choices"][0]["message"]["content"]
+                
         except requests.exceptions.RequestException:
             return _("I'm having trouble connecting to the API, please check your internet connection.")
+        except json.JSONDecodeError as e:
+            return f"Mistral API Error: Invalid JSON response - {str(e)}"
+        except (KeyError, IndexError) as e:
+            return f"Mistral API Error: Unexpected response format - {str(e)}"
 
     def ask_stream(self, prompt, chat, callback=None):
-        """Stream-enabled version for Mistral providers with fallback"""
-        try:
-            # 먼저 스트리밍 시도
-            result = self.ask(prompt, chat, stream=True, callback=callback)
-            
-            # 스트리밍 오류 시 논-스트리밍으로 폴백
-            if result and isinstance(result, str) and "Mistral API" in result and "Error" in result:
-                print(f"Mistral streaming failed, falling back to non-streaming: {result}")
-                fallback_result = self.ask(prompt, chat, stream=False, callback=None)
-                
-                # 폴백 결과를 콜백으로 전달
-                if callback and fallback_result and not ("Error" in fallback_result):
-                    callback(fallback_result)
-                
-                return fallback_result
-            
-            return result
-        except Exception as e:
-            # 예외 발생 시에도 논-스트리밍으로 폴백
-            print(f"Mistral streaming exception, falling back: {str(e)}")
-            return self.ask(prompt, chat, stream=False, callback=callback)
+        """Stream-enabled version for Mistral providers"""
+        return self.ask(prompt, chat, stream=True, callback=callback)
 
     def fetch_models(self):
         """Mistral API에서 사용 가능한 모델 목록을 가져옵니다"""

@@ -5,7 +5,10 @@ try:
 except Exception:
     from gettext import gettext as _  # fallback when running out of tree
 
-from .. import constants
+try:
+    from .. import constants
+except ImportError:
+    import constants
 
 import os
 import platform

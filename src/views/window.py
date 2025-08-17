@@ -30,12 +30,20 @@ except Exception:
     from gettext import gettext as _  # fallback when running out of tree
 from babel.dates import format_date, format_datetime, format_time
 
-from ..constants import app_id, build_type, rootdir
-from ..widgets.thread_item import ThreadItem
-from ..widgets.item import Item
-from ..hamonikr_threading import KillableThread
-from .export_dialog import ExportDialog
-from ..utils.file_extractor import FileExtractor
+try:
+    from ..constants import app_id, build_type, rootdir
+    from ..widgets.thread_item import ThreadItem
+    from ..widgets.item import Item
+    from ..hamonikr_threading import KillableThread
+    from .export_dialog import ExportDialog
+    from ..utils.file_extractor import FileExtractor
+except ImportError:
+    from constants import app_id, build_type, rootdir
+    from widgets.thread_item import ThreadItem
+    from widgets.item import Item
+    from hamonikr_threading import KillableThread
+    from views.export_dialog import ExportDialog
+    from utils.file_extractor import FileExtractor
 
 class CustomEntry(Gtk.TextView):
     def __init__(self, **kwargs):
@@ -694,11 +702,19 @@ Please analyze the above file content and use it to answer the user's questions.
         tail_label = find_tail_label()
         accumulated = {"text": ""}
 
-        def on_chunk(chunk_text: str):
+        def on_chunk(chunk_text):
             # 워커 스레드 → UI 스레드로 안전하게 전달
             def _update():
-                # 누적 텍스트 갱신
-                accumulated["text"] += chunk_text or ""
+                # 이미지 객체인지 확인
+                if hasattr(chunk_text, 'save') and hasattr(chunk_text, 'format'):
+                    # PIL Image 객체인 경우 - 이미지 응답으로 처리
+                    stream_item_dict["content"] = chunk_text
+                    # UI 업데이트는 스킵 (이미지는 별도 처리)
+                    return
+                
+                # 텍스트 응답인 경우
+                chunk_str = str(chunk_text) if chunk_text is not None else ""
+                accumulated["text"] += chunk_str
                 stream_item_dict["content"] = accumulated["text"]
                 # 가능한 한 가볍게 UI 업데이트: 한 개 라벨에 텍스트만 누적
                 nonlocal tail_label
