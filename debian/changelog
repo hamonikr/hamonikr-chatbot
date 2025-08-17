@@ -1,3 +1,15 @@
+hamonikr-chatbot (1.2.7) unstable; urgency=medium
+
+  * Release v1.2.7
+
+ -- HamoniKR <pkg@hamonikr.org>  Sun, 17 Aug 2025 13:04:30 +0900
+
+hamonikr-chatbot (1.2.7) unstable; urgency=medium
+
+  * Release v1.2.7
+
+ -- HamoniKR <pkg@hamonikr.org>  Sun, 17 Aug 2025 13:04:23 +0900
+
 hamonikr-chatbot (1.2.4) unstable; urgency=medium
 
   * Changed default color scheme from 'system' to 'light' in GSettings schema and application logic

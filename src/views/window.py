@@ -35,6 +35,7 @@ from ..widgets.thread_item import ThreadItem
 from ..widgets.item import Item
 from ..hamonikr_threading import KillableThread
 from .export_dialog import ExportDialog
+from ..utils.file_extractor import FileExtractor
 
 class CustomEntry(Gtk.TextView):
     def __init__(self, **kwargs):
@@ -144,14 +145,24 @@ class BavarderWindow(Adw.ApplicationWindow):
     thread_stack = Gtk.Template.Child()
     main = Gtk.Template.Child()
     scroll_down_button = Gtk.Template.Child()
+    toolbar_box = Gtk.Template.Child()
+    file_upload_button = Gtk.Template.Child()
+    attached_file_box = Gtk.Template.Child()
+    attached_file_label = Gtk.Template.Child()
+    remove_file_button = Gtk.Template.Child()
+    file_icon = Gtk.Template.Child()
 
     threads = []
+    attached_file_content = None
+    attached_file_name = None
+    file_extractor = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.app = Gtk.Application.get_default()
         self.settings = Gio.Settings(schema_id=app_id)
+        self.file_extractor = FileExtractor()
 
         CustomEntry.set_css_name("entry")
         self.message_entry = CustomEntry()
@@ -165,6 +176,7 @@ class BavarderWindow(Adw.ApplicationWindow):
         self.message_entry.add_css_class("chat-entry")
 
         self.scrolled_window.set_child(self.message_entry)
+        
         self.load_threads()
 
         # 로컬/클라우드 모드 토글 제거
@@ -257,6 +269,7 @@ class BavarderWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback()
     def threads_row_activated_cb(self, *args):
+        # 세션 기반 파일 관리로 변경 - 다른 채팅으로 전환시에도 파일 유지
         self.split_view.set_show_content(True)
 
         try:
@@ -282,8 +295,8 @@ class BavarderWindow(Adw.ApplicationWindow):
 
     @Gtk.Template.Callback()
     def on_new_chat_action(self, *args):
-        # 새 채팅 생성
-        self.app.on_new_chat_action(None, None)
+        # 명시적으로 새 채팅 버튼을 클릭한 경우 파일 초기화
+        self.app.on_new_chat_action(None, None, clear_files=True)
         # 방금 생성된 마지막 스레드를 선택/활성화하여 중복 생성 방지
         try:
             last_index = len(self.app.data["chats"]) - 1
@@ -332,14 +345,11 @@ class BavarderWindow(Adw.ApplicationWindow):
             dialog.set_transient_for(self)
             dialog.present()
         else:
-            toast = Adw.Toast()
-            toast.set_title(_("Nothing to clear!"))
-            self.toast_overlay.add_toast(toast)
+            self.show_toast(_("Nothing to clear!"))
 
 
     def on_clear_all_response(self, _widget, response):
         if response == "delete":
-            toast = Adw.Toast()
             if self.app.data["chats"]:
                 if self.content:
                     self.stack.set_visible_child(self.main)
@@ -347,10 +357,9 @@ class BavarderWindow(Adw.ApplicationWindow):
                     del self.chat["content"]
                 self.stack.set_visible_child(self.status_no_chat)
 
-                toast.set_title(_("All chats cleared!"))
+                self.show_toast(_("All chats cleared!"))
             else:
-                toast.set_title(_("Nothing to clear!"))
-            self.toast_overlay.add_toast(toast)
+                self.show_toast(_("Nothing to clear!"))
 
     @Gtk.Template.Callback()
     def on_clear_all_threads(self, *args):
@@ -373,9 +382,7 @@ class BavarderWindow(Adw.ApplicationWindow):
             dialog.set_transient_for(self)
             dialog.present()
         else:
-            toast = Adw.Toast()
-            toast.set_title(_("Nothing to clear!"))
-            self.toast_overlay.add_toast(toast)
+            self.show_toast(_("Nothing to clear!"))
 
     def on_clear_all_threads_response(self, _widget, response):
         """전체 대화 스레드 삭제 확인 응답 처리"""
@@ -387,9 +394,7 @@ class BavarderWindow(Adw.ApplicationWindow):
             self.stack.set_visible_child(self.status_no_thread)
             self.thread_stack.set_visible_child(self.status_no_chat_thread)
             
-            toast = Adw.Toast()
-            toast.set_title(_("All threads cleared!"))
-            self.toast_overlay.add_toast(toast)
+            self.show_toast(_("All threads cleared!"))
 
     def apply_font_settings(self):
         """폰트 및 줄높이 설정을 메시지 위젯들에 적용"""
@@ -442,9 +447,7 @@ class BavarderWindow(Adw.ApplicationWindow):
             dialog.set_transient_for(self)
             dialog.present()
         else:
-            toast = Adw.Toast()
-            toast.set_title(_("Nothing to export!"))
-            self.toast_overlay.add_toast(toast)
+            self.show_toast(_("Nothing to export!"))
 
     # PROVIDER - ONLINE
     def load_provider_selector(self):
@@ -516,6 +519,88 @@ class BavarderWindow(Adw.ApplicationWindow):
 
 
 
+    def get_file_context_prompt(self):
+        """첨부된 파일이 있으면 파일 컨텍스트 프롬프트 반환"""
+        if self.attached_file_content and self.attached_file_name:
+            context = f"""You have access to the following file content for context:
+
+## File: {self.attached_file_name}
+
+```
+{self.attached_file_content}
+```
+
+Please analyze the above file content and use it to answer the user's questions. Reference specific parts of the file when relevant."""
+            return context
+        
+        return None
+
+    def show_toast(self, message, timeout=2):
+        """토스트 알림을 표시하는 헬퍼 메서드"""
+        toast = Adw.Toast()
+        toast.set_title(message)
+        toast.set_timeout(timeout)
+        self.toast_overlay.add_toast(toast)
+
+    def get_file_icon_name(self, filename):
+        """파일 확장자에 따른 적절한 아이콘 이름 반환"""
+        if not filename:
+            return "document-symbolic"
+        
+        # 파일 확장자 추출
+        ext = filename.lower().split('.')[-1] if '.' in filename else ''
+        
+        # 확장자별 아이콘 매핑
+        icon_map = {
+            # 텍스트 파일
+            'txt': 'text-x-generic-symbolic',
+            'md': 'text-markdown-symbolic',
+            'readme': 'text-x-readme-symbolic',
+            
+            # 코드 파일
+            'py': 'text-x-python-symbolic',
+            'js': 'text-x-javascript-symbolic',
+            'html': 'text-html-symbolic',
+            'css': 'text-css-symbolic',
+            'json': 'application-json-symbolic',
+            'xml': 'text-xml-symbolic',
+            'yml': 'text-x-generic-symbolic',
+            'yaml': 'text-x-generic-symbolic',
+            
+            # 문서 파일
+            'pdf': 'application-pdf-symbolic',
+            'doc': 'x-office-document-symbolic',
+            'docx': 'x-office-document-symbolic',
+            'xls': 'x-office-spreadsheet-symbolic',
+            'xlsx': 'x-office-spreadsheet-symbolic',
+            'ppt': 'x-office-presentation-symbolic',
+            'pptx': 'x-office-presentation-symbolic',
+            
+            # 이미지 파일
+            'png': 'image-x-generic-symbolic',
+            'jpg': 'image-x-generic-symbolic',
+            'jpeg': 'image-x-generic-symbolic',
+            'gif': 'image-x-generic-symbolic',
+            'svg': 'image-svg+xml-symbolic',
+            
+            # 아카이브 파일
+            'zip': 'application-x-archive-symbolic',
+            'tar': 'application-x-archive-symbolic',
+            'gz': 'application-x-archive-symbolic',
+            '7z': 'application-x-archive-symbolic',
+            
+            # 로그 파일
+            'log': 'text-x-log-symbolic',
+            
+            # 설정 파일
+            'conf': 'text-x-generic-symbolic',
+            'ini': 'text-x-generic-symbolic',
+            'cfg': 'text-x-generic-symbolic',
+        }
+        
+        # 아이콘 반환, 없으면 기본 문서 아이콘
+        return icon_map.get(ext, 'document-symbolic')
+
     @Gtk.Template.Callback()
     def on_ask(self, *args):
         # IME(입력기) 커밋이 버퍼에 완전히 반영된 뒤 처리되도록 충분한 지연(50ms)
@@ -529,7 +614,8 @@ class BavarderWindow(Adw.ApplicationWindow):
         self.message_entry.get_buffer().set_text("")
 
         if not self.chat:
-            self.on_new_chat_action()
+            # 첫 메시지를 보낼 때는 파일을 유지하면서 새 채팅 생성 (clear_files=False)
+            self.app.on_new_chat_action(None, None, clear_files=False)
 
             # now get the latest row
             row = self.threads_list.get_row_at_index(len(self.app.data["chats"]) - 1)
@@ -638,6 +724,8 @@ class BavarderWindow(Adw.ApplicationWindow):
             self.toast.set_timeout(0)
             self.toast_overlay.add_toast(self.toast)
 
+            # 파일 컨텍스트는 이제 main.py에서 직접 get_file_context_prompt()를 호출하여 처리됨
+            
             # 스트리밍 요청 시도. 공급자가 스트리밍을 지원하지 않으면 콜백이 한 번만 불린다
             response = self.app.ask(prompt, self.chat, stream=True, callback=on_chunk)
 
@@ -888,6 +976,117 @@ class BavarderWindow(Adw.ApplicationWindow):
         except Exception:
             # Never break the message flow due to title update issues
             pass
+
+    @Gtk.Template.Callback()
+    def on_file_upload(self, widget):
+        """파일 업로드 버튼 클릭 시 호출되는 메서드"""
+        file_dialog = Gtk.FileDialog()
+        file_dialog.set_title(_("Select a file to attach"))
+        
+        # 지원하는 파일 형식 필터 설정
+        supported_extensions = self.file_extractor.get_supported_extensions()
+        
+        # 텍스트 파일 필터
+        filter_text = Gtk.FileFilter()
+        filter_text.set_name(_("Text files"))
+        for ext in ['.txt', '.md', '.py', '.js', '.html', '.css', '.json', 
+                   '.xml', '.yml', '.yaml', '.ini', '.conf', '.log']:
+            if ext in supported_extensions:
+                filter_text.add_pattern(f"*{ext}")
+        
+        # 문서 파일 필터
+        filter_docs = Gtk.FileFilter()
+        filter_docs.set_name(_("Documents"))
+        for ext in ['.pdf', '.docx', '.xlsx', '.pptx']:
+            if ext in supported_extensions:
+                filter_docs.add_pattern(f"*{ext}")
+        
+        # 지원되는 모든 파일 필터
+        filter_supported = Gtk.FileFilter()
+        filter_supported.set_name(_("Supported files"))
+        for ext in supported_extensions:
+            filter_supported.add_pattern(f"*{ext}")
+        
+        filter_all = Gtk.FileFilter()
+        filter_all.set_name(_("All files"))
+        filter_all.add_pattern("*")
+        
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(filter_supported)
+        filters.append(filter_text)
+        filters.append(filter_docs)
+        filters.append(filter_all)
+        file_dialog.set_filters(filters)
+        file_dialog.set_default_filter(filter_supported)
+        
+        file_dialog.open(self, None, self.on_file_dialog_response)
+
+    def on_file_dialog_response(self, dialog, result):
+        """파일 선택 다이얼로그 응답 처리"""
+        try:
+            file = dialog.open_finish(result)
+            if file:
+                self.load_file_content(file)
+        except Exception as e:
+            # 사용자가 취소한 경우는 조용히 처리
+            if "dismissed" not in str(e).lower() and "cancelled" not in str(e).lower():
+                self.show_toast(_("Failed to open file"))
+
+    def load_file_content(self, file):
+        """파일 내용을 읽어서 저장"""
+        try:
+            file_path = file.get_path()
+            self.attached_file_name = file.get_basename()
+            
+            # 파일 정보 확인
+            file_info = self.file_extractor.get_file_info(file_path)
+            
+            if not file_info['supported']:
+                self.show_toast(_("Unsupported file format"))
+                return
+            
+            # 파일 내용 추출
+            success, content, error = self.file_extractor.extract_text(file_path)
+            
+            if not success:
+                self.show_toast(_(f"Failed to read file: {error}"))
+                return
+            
+            self.attached_file_content = content
+            # 앱 레벨에도 저장
+            self.app.attached_file_content = content
+            self.app.attached_file_name = self.attached_file_name
+            
+            # 파일 업로드 버튼 스타일 변경 (첨부됨을 표시)
+            self.file_upload_button.add_css_class("suggested-action")
+            self.file_upload_button.set_tooltip_text(_(f"Attached: {self.attached_file_name} (click to change)"))
+            
+            # 첨부된 파일 표시 UI 업데이트
+            self.attached_file_label.set_text(f"{self.attached_file_name} ({file_info['size_mb']}MB)")
+            # 파일 형식에 따른 아이콘 설정
+            icon_name = self.get_file_icon_name(self.attached_file_name)
+            self.file_icon.set_from_icon_name(icon_name)
+            self.attached_file_box.set_visible(True)
+            
+        except Exception as e:
+            self.show_toast(_(f"Failed to process file: {str(e)}"))
+
+    def clear_attached_file(self):
+        """첨부된 파일 정보 초기화"""
+        self.attached_file_content = None
+        self.attached_file_name = None
+        # 앱 레벨에서도 초기화
+        self.app.attached_file_content = None
+        self.app.attached_file_name = None
+        self.file_upload_button.remove_css_class("suggested-action")
+        self.file_upload_button.set_tooltip_text(_("Attach File"))
+        self.attached_file_box.set_visible(False)
+        self.attached_file_label.set_text("")
+
+    @Gtk.Template.Callback()
+    def on_remove_file(self, widget):
+        """첨부된 파일 제거"""
+        self.clear_attached_file()
 
 
 

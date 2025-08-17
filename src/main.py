@@ -165,8 +165,12 @@ class BavarderApplication(Adw.Application):
         self.current_provider = self.settings.get_string("current-provider")
         self.model_name = self.settings.get_string("model")
         
-        # 신규 사용자의 경우 current_provider가 기본값이 아니면 openrouter로 설정
-        if self.current_provider in ["google-flan-t5-xxl", "", "ollama"]:
+        # 파일 첨부 데이터 (앱 레벨에서 관리)
+        self.attached_file_content = None
+        self.attached_file_name = None
+        
+        # 신규 사용자의 경우에만 기본 프로바이더 설정
+        if self.current_provider == "":
             self.settings.set_string("current-provider", "openrouter")
             self.current_provider = "openrouter"
         # 초기 테마 적용
@@ -195,10 +199,20 @@ class BavarderApplication(Adw.Application):
         )
 
         # Online provider model selection (for current provider)
+        current_provider_model = ""
+        try:
+            current_provider = self.providers.get(self.current_provider)
+            if current_provider and hasattr(current_provider, 'data'):
+                current_provider_model = current_provider.data.get('model', '')
+            elif current_provider and hasattr(current_provider, 'model'):
+                current_provider_model = getattr(current_provider, 'model', '')
+        except Exception:
+            pass
+        
         self.create_stateful_action(
             "set_provider_model",
             GLib.VariantType.new("s"),
-            GLib.Variant("s", ""),
+            GLib.Variant("s", current_provider_model),
             self.on_set_provider_model_action
         )
 
@@ -250,6 +264,10 @@ class BavarderApplication(Adw.Application):
     def on_set_provider_action(self, action, *args):
         self.current_provider = args[0].get_string()
         Gio.SimpleAction.set_state(self.lookup_action("set_provider"), args[0])
+        # 프로바이더 변경시 즉시 설정 저장
+        self.settings.set_string("current-provider", self.current_provider)
+        # 프로바이더 변경시 해당 프로바이더의 모델 상태 업데이트
+        self.update_provider_model_action_state()
         # 프로바이더 변경 시 상단 메뉴의 모델 섹션을 현재 프로바이더 기준으로 재구성
         try:
             if self.win:
@@ -263,6 +281,8 @@ class BavarderApplication(Adw.Application):
         if previous != self.model_name:
             # reset model for loading the new one
             self.model = None
+            # 모델 변경시 즉시 설정 저장
+            self.settings.set_string("model", self.model_name)
         Gio.SimpleAction.set_state(self.lookup_action("set_model"), args[0])
 
     def on_set_provider_model_action(self, action, *args):
@@ -284,9 +304,45 @@ class BavarderApplication(Adw.Application):
                     provider.model = model_id
                 except Exception:
                     pass
+                # 프로바이더별 모델 설정 저장
+                self.save()
         except Exception:
             pass
         Gio.SimpleAction.set_state(self.lookup_action("set_provider_model"), args[0])
+
+    def update_provider_model_action_state(self):
+        """현재 프로바이더의 저장된 모델로 액션 상태 업데이트"""
+        try:
+            current_provider = self.providers.get(self.current_provider)
+            if current_provider:
+                current_model = ""
+                if hasattr(current_provider, 'data') and current_provider.data:
+                    current_model = current_provider.data.get('model', '')
+                elif hasattr(current_provider, 'model'):
+                    current_model = getattr(current_provider, 'model', '')
+                
+                if current_model:
+                    action = self.lookup_action("set_provider_model")
+                    if action:
+                        action.set_state(GLib.Variant("s", current_model))
+        except Exception:
+            pass
+
+    def get_file_context_prompt(self):
+        """앱 레벨에서 파일 컨텍스트 프롬프트 반환"""
+        if self.attached_file_content and self.attached_file_name:
+            context = f"""You have access to the following file content for context:
+
+## File: {self.attached_file_name}
+
+```
+{self.attached_file_content}
+```
+
+Please analyze the above file content and use it to answer the user's questions. Reference specific parts of the file when relevant."""
+            return context
+        
+        return None
 
     def save(self):
         with open(self.data_path, "w", encoding="utf-8") as f:
@@ -309,7 +365,14 @@ class BavarderApplication(Adw.Application):
             self.win.destroy()
             self.number_of_win -= 1
 
-    def on_new_chat_action(self, widget, _):
+    def on_new_chat_action(self, widget, _, clear_files=True):
+        # 명시적으로 새 채팅을 시작할 때만 파일 초기화
+        if clear_files:
+            self.attached_file_content = None
+            self.attached_file_name = None
+            if self.win:
+                self.win.clear_attached_file()
+        
         chat_id = 0
         for chat in self.data["chats"]:
             if chat["id"] > chat_id:
@@ -359,6 +422,9 @@ class BavarderApplication(Adw.Application):
 
             self.providers[p.slug] = p
 
+        # 프로바이더 로드 후 현재 프로바이더의 모델 상태 업데이트
+        self.update_provider_model_action_state()
+        
         # 오프라인 모델 선택 UI 제거됨
         win.load_provider_selector()
         win.present()
@@ -510,9 +576,24 @@ class BavarderApplication(Adw.Application):
             else:
                 system_template = f"""You are a helpful and friendly AI assistant with the name {self.bot_name}. The name of the user are {self.user_name}. Respond very concisely."""
                 try:
-                    if getattr(self, "transient_system_prompt", None):
-                        system_template = f"{self.transient_system_prompt}\n\n{system_template}"
-                except Exception:
+                    # 지속적인 파일 컨텍스트 확인 (앱 레벨에서)
+                    file_context = self.get_file_context_prompt() or ""
+                    
+                    # 일회성 시스템 프롬프트 확인
+                    transient_prompt = getattr(self, "transient_system_prompt", None) or ""
+                    
+                    # 파일 컨텍스트와 일회성 프롬프트 결합
+                    combined_context = ""
+                    if file_context:
+                        combined_context += file_context
+                    if transient_prompt and transient_prompt != file_context:
+                        if combined_context:
+                            combined_context += "\n\n"
+                        combined_context += transient_prompt
+                    
+                    if combined_context:
+                        system_template = f"{combined_context}\n\n{system_template}"
+                except Exception as e:
                     pass
                 with self.model.chat_session(self.model_settings.get("system_template", system_template)):
                     self.model.current_chat_session = chat["content"].copy()
@@ -532,15 +613,37 @@ class BavarderApplication(Adw.Application):
 
             for p in l:
                 if p.enabled and p.slug == self.current_provider:
-                    # One-off system prompt injection support
+                    # 지속적인 파일 컨텍스트와 일회성 시스템 프롬프트 지원
                     sys_prompt = None
                     try:
-                        sys_prompt = getattr(self, "transient_system_prompt", None)
-                    except Exception:
+                        # 지속적인 파일 컨텍스트 확인 (앱 레벨에서)
+                        file_context = self.get_file_context_prompt() or ""
+                        
+                        # 일회성 시스템 프롬프트 확인
+                        transient_prompt = getattr(self, "transient_system_prompt", None) or ""
+                        
+                        # 파일 컨텍스트와 일회성 프롬프트 결합
+                        if file_context:
+                            sys_prompt = file_context
+                        if transient_prompt and transient_prompt != file_context:
+                            if sys_prompt:
+                                sys_prompt += "\n\n"
+                            else:
+                                sys_prompt = ""
+                            sys_prompt += transient_prompt
+                            
+                    except Exception as e:
                         sys_prompt = None
-                    # Clear after capturing to avoid leaking into next request
+                    
+                    # 일회성 프롬프트만 클리어 (파일 컨텍스트는 유지)
                     try:
-                        self.transient_system_prompt = None
+                        if getattr(self, "transient_system_prompt", None):
+                            file_context_check = ""
+                            if hasattr(self, 'win') and self.win and hasattr(self.win, 'get_file_context_prompt'):
+                                file_context_check = self.win.get_file_context_prompt() or ""
+                            # transient_system_prompt가 파일 컨텍스트와 다른 경우에만 클리어
+                            if self.transient_system_prompt != file_context_check:
+                                self.transient_system_prompt = None
                     except Exception:
                         pass
 
