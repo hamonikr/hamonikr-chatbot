@@ -196,13 +196,14 @@ if [ -f "debian/changelog" ]; then
         
         # 변경사항 추가
         if [ -n "$CHANGELOG_ENTRIES" ]; then
-            # echo를 사용하여 각 라인을 처리
+            # echo -e를 사용하여 \n을 실제 줄바꿈으로 변환하고 각 라인을 처리
             while IFS= read -r entry; do
-                if [ -n "$entry" ] && [[ "$entry" =~ [*] ]]; then
-                    # * 로 시작하는 항목만 추가
-                    dch --append "$entry"
+                if [ -n "$entry" ] && [[ "$entry" =~ \*[[:space:]] ]]; then
+                    # * 제거 (dch --append가 자동으로 * 를 추가함)
+                    clean_entry=$(echo "$entry" | sed 's/^[[:space:]]*\*[[:space:]]*//')
+                    dch --append "$clean_entry"
                 fi
-            done <<< "$CHANGELOG_ENTRIES"
+            done <<< "$(echo -e "$CHANGELOG_ENTRIES")"
         fi
     else
         # dch가 없으면 수동으로 업데이트
