@@ -143,6 +143,7 @@ class BavarderApplication(Adw.Application):
         self.data = {
             "chats": [],
             "providers": {
+                "openrouter-free": {"enabled": True, "data": {}},  # 무료 GPT-OSS 모델
                 "ollama": {"enabled": True, "data": {}},
                 "google-flan-t5-xxl": {"enabled": False, "data": {}},
                 "gpt-2": {"enabled": False, "data": {}},
@@ -164,10 +165,10 @@ class BavarderApplication(Adw.Application):
         self.current_provider = self.settings.get_string("current-provider")
         self.model_name = self.settings.get_string("model")
         
-        # 신규 사용자의 경우 current_provider가 기본값이 아니면 ollama로 설정
-        if self.current_provider in ["google-flan-t5-xxl", ""]:
-            self.settings.set_string("current-provider", "ollama")
-            self.current_provider = "ollama"
+        # 신규 사용자의 경우 current_provider가 기본값이 아니면 openrouter-free로 설정
+        if self.current_provider in ["google-flan-t5-xxl", "", "ollama"]:
+            self.settings.set_string("current-provider", "openrouter-free")
+            self.current_provider = "openrouter-free"
         # 초기 테마 적용
         try:
             scheme = self.settings.get_string("color-scheme") or "light"

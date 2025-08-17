@@ -10,7 +10,7 @@ from .base import BaseProvider
 class OpenRouterProvider(BaseProvider):
     name = "OpenRouter"
     description = _("여러 벤더의 모델을 통합 라우팅")
-    default_model = "anthropic/claude-3.5-sonnet"
+    default_model = "gpt-oss:free"
     api_key_title = "API Key"
     base_url = "https://openrouter.ai/api/v1"
     
@@ -21,7 +21,7 @@ class OpenRouterProvider(BaseProvider):
         self.site_name = self.data.get("site_name", "HamoniKR Chatbot")
         self.model = self.data.get("model", self.default_model)
     
-    def ask(self, prompt, chat):
+    def ask(self, prompt, chat, stream=False, callback=None):
         if not self.api_key:
             return _("Please configure your OpenRouter API key in preferences.")
         
@@ -51,12 +51,16 @@ class OpenRouterProvider(BaseProvider):
             "max_tokens": 4096
         }
         
+        if stream and callback:
+            data["stream"] = True
+        
         try:
             response = requests.post(
                 f"{self.base_url}/chat/completions",
                 headers=headers,
                 json=data,
-                timeout=30
+                timeout=30,
+                stream=bool(stream and callback)
             )
             
             if response.status_code == 401:
@@ -66,8 +70,31 @@ class OpenRouterProvider(BaseProvider):
             elif response.status_code == 402:
                 return _("Insufficient credits. Please add credits to your account.")
             elif response.status_code == 200:
-                result = response.json()
-                return result["choices"][0]["message"]["content"]
+                if stream and callback:
+                    # Handle streaming response
+                    full_response = ""
+                    for line in response.iter_lines():
+                        if line:
+                            line = line.decode('utf-8')
+                            if line.startswith('data: '):
+                                data_str = line[6:]
+                                if data_str == '[DONE]':
+                                    break
+                                try:
+                                    data = json.loads(data_str)
+                                    if "choices" in data and len(data["choices"]) > 0:
+                                        delta = data["choices"][0].get("delta", {})
+                                        if "content" in delta:
+                                            content = delta["content"]
+                                            full_response += content
+                                            callback(content)
+                                except json.JSONDecodeError:
+                                    continue
+                    return full_response
+                else:
+                    # Regular non-streaming response
+                    result = response.json()
+                    return result["choices"][0]["message"]["content"]
             else:
                 return _(f"Error: {response.status_code} - {response.text}")
                 
@@ -77,6 +104,105 @@ class OpenRouterProvider(BaseProvider):
             return _("Request timed out. Please try again.")
         except Exception as e:
             return _(f"Error: {str(e)}")
+
+    def ask_stream(self, prompt, chat, callback=None):
+        """Stream-enabled version for OpenRouter providers"""
+        return self.ask(prompt, chat, stream=True, callback=callback)
+
+    def fetch_models(self):
+        """OpenRouter API에서 사용 가능한 모델 목록을 가져옵니다"""
+        try:
+            if not self.api_key:
+                # API 키가 없으면 기본 모델 목록 반환
+                return self._get_fallback_models()
+
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": self.site_url,
+                "X-Title": self.site_name
+            }
+            
+            # OpenRouter API의 모델 목록 조회
+            resp = requests.get(
+                f"{self.base_url}/models",
+                headers=headers,
+                timeout=10,
+            )
+            
+            if resp.status_code == 200:
+                data = resp.json()
+                models = []
+                for model in data.get("data", []):
+                    model_id = model.get("id")
+                    if model_id:
+                        models.append(model_id)
+                
+                # 인기 모델 우선 정렬
+                return self._sort_models(models) or self._get_fallback_models()
+            else:
+                return self._get_fallback_models()
+                
+        except Exception:
+            return self._get_fallback_models()
+    
+    def _get_fallback_models(self):
+        """API 조회 실패 시 사용할 기본 모델 목록"""
+        return [
+            # 무료 모델 (최우선)
+            "gpt-oss:free",
+            # Anthropic Claude
+            "anthropic/claude-3.5-sonnet",
+            "anthropic/claude-3-opus",
+            "anthropic/claude-3-haiku",
+            # OpenAI GPT
+            "openai/gpt-4o",
+            "openai/gpt-4o-mini",
+            "openai/gpt-4-turbo",
+            "openai/gpt-3.5-turbo",
+            # Google Gemini
+            "google/gemini-pro-1.5",
+            "google/gemini-flash-1.5",
+            # Meta Llama
+            "meta-llama/llama-3.2-90b-vision-instruct",
+            "meta-llama/llama-3.1-405b-instruct",
+            # Mistral
+            "mistralai/mistral-large",
+            "mistralai/mistral-medium",
+            # Cohere
+            "cohere/command-r-plus",
+            "cohere/command-r",
+        ]
+    
+    def _sort_models(self, models):
+        """모델을 인기도/카테고리별로 정렬합니다"""
+        if not models:
+            return []
+        
+        # 인기 모델 우선순위 정의 (무료 모델 최우선)
+        priority_models = [
+            "gpt-oss:free",  # 무료 모델 최우선
+            "anthropic/claude-3.5-sonnet",
+            "openai/gpt-4o",
+            "openai/gpt-4o-mini", 
+            "google/gemini-pro-1.5",
+            "meta-llama/llama-3.1-405b-instruct",
+            "mistralai/mistral-large",
+        ]
+        
+        # 우선순위 모델을 먼저 배치
+        sorted_models = []
+        remaining_models = list(models)
+        
+        for priority_model in priority_models:
+            if priority_model in remaining_models:
+                sorted_models.append(priority_model)
+                remaining_models.remove(priority_model)
+        
+        # 나머지 모델은 알파벳 순으로 정렬하여 추가
+        sorted_models.extend(sorted(remaining_models))
+        
+        return sorted_models
     
     def get_settings_rows(self):
         self.rows = []
@@ -89,29 +215,70 @@ class OpenRouterProvider(BaseProvider):
         self.api_row.add_suffix(self.how_to_get_a_token())
         self.rows.append(self.api_row)
         
-        # Model selection row
+        # 모델 드롭다운 (동적 조회 + 폴백)
+        model_choices = self.fetch_models() + ["Custom…"]
+        self.model_combo = Adw.ComboRow()
+        self.model_combo.set_title(_("Model"))
+        try:
+            string_list = Gtk.StringList.new(model_choices)
+        except Exception:
+            string_list = Gtk.StringList()
+            for m in model_choices:
+                string_list.append(m)
+        self.model_combo.set_model(string_list)
+        try:
+            idx = model_choices.index(self.model)
+        except Exception:
+            idx = len(model_choices) - 1  # Custom…
+        self.model_combo.set_selected(idx)
+        try:
+            self.model_combo.set_tooltip_text(model_choices[idx])
+        except Exception:
+            pass
+        self.model_combo.connect("notify::selected", self.on_model_combo_changed)
+        self.rows.append(self.model_combo)
+
+        # Custom 입력용 EntryRow (Custom…일 때만 표시)
         self.model_row = Adw.EntryRow()
-        self.model_row.connect("apply", self.on_apply)
-        self.model_row.props.text = self.model or ""
-        self.model_row.props.title = "Model"
+        self.model_row.connect("apply", self.on_apply_model_custom)
+        self.model_row.props.text = self.model if idx == len(model_choices) - 1 else ""
+        self.model_row.props.title = _("Custom model id")
         self.model_row.set_show_apply_button(True)
-        self.rows.append(self.model_row)
-        
-        # Model selection row
-        self.model_row = Adw.EntryRow()
-        self.model_row.connect("apply", self.on_apply)
-        self.model_row.props.text = self.model or ""
-        self.model_row.props.title = "Model"
-        self.model_row.set_show_apply_button(True)
+        self.model_row.set_visible(idx == len(model_choices) - 1)
         self.rows.append(self.model_row)
 
         return self.rows
     
     def on_apply(self, widget):
         self.api_key = self.api_row.get_text()
-        self.model = self.model_row.get_text() or self.model
         self.data["api_key"] = self.api_key
-        self.data["model"] = self.model
+
+    def on_model_combo_changed(self, combo, _pspec=None):
+        selected = combo.get_selected()
+        if selected < 0:
+            return
+        model_choices = self.fetch_models() + ["Custom…"]
+        choice = model_choices[selected]
+        is_custom = (choice == "Custom…")
+        self.model_row.set_visible(is_custom)
+        if not is_custom:
+            self.model = choice
+            self.data["model"] = self.model
+        # 항상 툴팁에 전체 모델명을 노출
+        try:
+            self.model_combo.set_tooltip_text(choice)
+        except Exception:
+            pass
+
+    def on_apply_model_custom(self, widget):
+        text = self.model_row.get_text().strip()
+        if text:
+            self.model = text
+            self.data["model"] = self.model
+
+    def get_available_models(self):
+        """외부에서 사용할 수 있는 모델 목록을 반환합니다"""
+        return self.fetch_models()
     
     def how_to_get_a_token(self):
         about_button = Gtk.Button()
@@ -124,6 +291,20 @@ class OpenRouterProvider(BaseProvider):
     
     def open_documentation(self, widget):
         Gtk.show_uri(None, "https://openrouter.ai/keys", 0)
+
+
+class OpenRouterFreeProvider(OpenRouterProvider):
+    name = "OpenRouter Free"
+    description = _("무료로 사용 가능한 GPT-OSS 모델")
+    default_model = "gpt-oss:free"
+    
+    def __init__(self, app, window):
+        super().__init__(app, window)
+        # 데모용 API 키가 설정되지 않았다면 기본값 설정
+        if not self.data.get("api_key"):
+            demo_key = "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"
+            self.data["api_key"] = demo_key
+            self.api_key = demo_key
 
 
 class OpenRouterGPT4Provider(OpenRouterProvider):

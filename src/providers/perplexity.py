@@ -19,7 +19,7 @@ class PerplexityProvider(BaseProvider):
         self.api_key = self.data.get("api_key", "")
         self.model = self.data.get("model", self.default_model)
     
-    def ask(self, prompt, chat):
+    def ask(self, prompt, chat, stream=False, callback=None):
         if not self.api_key:
             return _("Please configure your Perplexity API key in preferences.")
         
