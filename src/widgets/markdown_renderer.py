@@ -31,7 +31,6 @@ try:
     from gi.repository import WebKit as WebKitModule
     WEBKIT_AVAILABLE = True
     WEBKIT_MODULE = WebKitModule
-    pass  # WebKit 6.0 available
 except (ImportError, ValueError):
     # GTK3용 WebKit2 4.1 폴백 시도 (GTK4와 호환되지 않음)
     try:
@@ -65,7 +64,6 @@ class MarkdownRenderer(Gtk.Box):
         
         if WEBKIT_AVAILABLE:
             try:
-                pass  # Initializing WebView
                 # WebView 설정
                 self.webview = WEBKIT_MODULE.WebView()
                 self.webview.set_hexpand(True)
@@ -104,7 +102,6 @@ class MarkdownRenderer(Gtk.Box):
                 # 내용 로드 완료 시 높이 조정
                 self.webview.connect('load-changed', self._on_load_changed)
                 
-                pass  # WebView initialized
             except Exception:
                 self.webview = None
         
@@ -132,7 +129,6 @@ class MarkdownRenderer(Gtk.Box):
             # 기본 마크다운만 사용 (확장 없이)
             test_md = markdown.Markdown()
             test_md.convert("test")
-            pass  # Basic markdown available
         except Exception:
             pass
         
@@ -151,7 +147,6 @@ class MarkdownRenderer(Gtk.Box):
             try:
                 style_manager = Adw.StyleManager.get_default()
                 is_dark = style_manager.get_dark()
-                pass  # Dark mode status detected
             except Exception:
                 pass
         
@@ -432,16 +427,45 @@ class MarkdownRenderer(Gtk.Box):
             self.webview.load_html(error_html, None)
     
     def _markdown_to_pango(self, content):
-        """간단한 마크다운을 Pango 마크업으로 변환"""
-        # HTML 엔티티 이스케이프
+        """간단한 마크다운을 Pango 마크업으로 변환 (안전한 방식)"""
+        
+        # 먼저 링크 패턴을 임시로 치환
+        link_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+        links = []
+        def link_replacer(match):
+            links.append((match.group(1), match.group(2)))
+            return f'__LINK_{len(links)-1}__'
+        content = re.sub(link_pattern, link_replacer, content)
+        
+        # 인라인 코드를 임시로 치환 (백틱 안의 내용을 보호)
+        code_pattern = r'`([^`]+)`'
+        codes = []
+        def code_replacer(match):
+            codes.append(match.group(1))
+            return f'__CODE_{len(codes)-1}__'
+        content = re.sub(code_pattern, code_replacer, content)
+        
+        # HTML 엔티티 이스케이프 (링크와 코드는 보호됨)
         content = content.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
         
         # 기본적인 마크다운 변환
         content = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', content)  # 볼드
         content = re.sub(r'\*([^*]+)\*', r'<i>\1</i>', content)      # 이탤릭
-        content = re.sub(r'`([^`]+)`', r'<tt>\1</tt>', content)      # 인라인 코드
         content = re.sub(r'^# (.+)$', r'<big><b>\1</b></big>', content, flags=re.MULTILINE)  # H1
         content = re.sub(r'^## (.+)$', r'<big>\1</big>', content, flags=re.MULTILINE)        # H2
+        
+        # 코드를 다시 삽입 (Pango 안전)
+        for i, code_text in enumerate(codes):
+            # 코드 안의 특수문자도 이스케이프
+            safe_code = code_text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            content = content.replace(f'__CODE_{i}__', f'<tt>{safe_code}</tt>')
+        
+        # 링크를 다시 삽입 (Pango에서는 링크를 단순 텍스트로)
+        for i, (text, url) in enumerate(links):
+            # 링크 텍스트와 URL 모두 이스케이프
+            safe_text = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            safe_url = url.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+            content = content.replace(f'__LINK_{i}__', f'{safe_text} ({safe_url})')
         
         # 테이블은 단순 텍스트로 표시
         lines = content.split('\n')
@@ -607,11 +631,9 @@ class MarkdownRenderer(Gtk.Box):
                     estimated_height = min(estimated_height, 800)
                     
                     self.webview.set_size_request(-1, estimated_height)
-                    pass  # Height adjusted
                 else:
                     # 콘텐츠가 없으면 기본 높이
                     self.webview.set_size_request(-1, 300)
-                    pass  # Default height set
                     
             except Exception:
                 # 실패시 기본 높이

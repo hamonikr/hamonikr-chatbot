@@ -243,11 +243,12 @@ class OpenRouterProvider(BaseProvider):
         self.api_row.connect("apply", self.on_apply)
         self.api_row.props.text = self.api_key or ""
         self.api_row.props.title = f"{self.api_key_title} (선택사항)"
-        try:
-            self.api_row.props.subtitle = "비워두면 기본 키 사용"
-        except AttributeError:
-            # subtitle 속성이 없는 GTK 버전의 경우 무시
-            pass
+        # subtitle 설정을 hasattr로 안전하게 체크
+        if hasattr(self.api_row.props, 'subtitle'):
+            try:
+                self.api_row.props.subtitle = "비워두면 기본 키 사용"
+            except:
+                pass
         self.api_row.set_show_apply_button(True)
         self.api_row.add_suffix(self.how_to_get_a_token())
         self.rows.append(self.api_row)
