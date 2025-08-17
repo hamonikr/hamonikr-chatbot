@@ -418,6 +418,20 @@ class BavarderWindow(Adw.ApplicationWindow):
             line-height: {line_height};
             margin: 4px 0;
         }}
+        
+        /* 코드 블록 폰트 설정 */
+        textview.view {{
+            font-family: "{font_family}";
+            font-size: {font_size}pt;
+            line-height: {line_height};
+        }}
+        
+        /* GtkSourceView 전용 설정 */
+        GtkSourceView, .code-block textview {{
+            font-family: "{font_family}";
+            font-size: {font_size}pt;
+            line-height: {line_height};
+        }}
         """
         
         # CSS Provider 생성 및 적용

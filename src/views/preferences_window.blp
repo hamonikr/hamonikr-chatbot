@@ -81,6 +81,12 @@ template $Preferences : Adw.PreferencesWindow {
         };
         digits: 1;
       }
+
+      Adw.SwitchRow webkit_rendering_switch {
+        title: _("Enhanced Markdown Rendering");
+        subtitle: _("Use WebKit for better table and markdown display (experimental)");
+        active: false;
+      }
     }
   }
 }

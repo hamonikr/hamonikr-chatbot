@@ -1,4 +1,4 @@
-from gi.repository import Gtk, Adw, Gio, Pango
+from gi.repository import Gtk, Adw, Gio, Pango, GLib
 
 try:
     from ..constants import app_id, rootdir
@@ -26,6 +26,7 @@ class PreferencesWindow(Adw.PreferencesWindow):
     font_button = Gtk.Template.Child()
     font_dialog = Gtk.Template.Child()
     line_height_spin = Gtk.Template.Child()
+    webkit_rendering_switch = Gtk.Template.Child()
 
     def __init__(self, parent, **kwargs):
         super().__init__(**kwargs)
@@ -42,16 +43,86 @@ class PreferencesWindow(Adw.PreferencesWindow):
 
     def setup(self):
         self.setup_signals()
-        self.load_providers()
         self.setup_font_settings()
+        self.setup_webkit_settings()
 
         self.bot_name.set_text(self.app.bot_name)
         self.user_name.set_text(self.app.user_name)
+        
+        # 프로바이더 로딩을 지연시켜 초기 표시 속도 향상
+        self.providers_loaded = False
+        self._add_loading_indicator()
+        GLib.idle_add(self.load_providers_async)
 
     def setup_signals(self):
         pass
+    
+    def _add_loading_indicator(self):
+        """프로바이더 로딩 중 표시할 인디케이터 추가"""
+        # 로딩 인디케이터 행 생성
+        self.loading_row = Adw.ActionRow()
+        self.loading_row.set_title(_("Loading providers..."))
+        self.loading_row.set_subtitle(_("Please wait while providers are being loaded"))
+        
+        # 스피너 추가
+        self.loading_spinner = Gtk.Spinner()
+        self.loading_spinner.set_spinning(True)
+        self.loading_spinner.set_valign(Gtk.Align.CENTER)
+        self.loading_row.add_suffix(self.loading_spinner)
+        
+        # 프로바이더 그룹에 추가
+        self.provider_group.add(self.loading_row)
+    
+    def _remove_loading_indicator(self):
+        """로딩 완료 시 인디케이터 제거"""
+        if hasattr(self, 'loading_row'):
+            self.loading_spinner.set_spinning(False)
+            self.provider_group.remove(self.loading_row)
+            del self.loading_row
+            del self.loading_spinner
 
+    def load_providers_async(self):
+        """프로바이더를 비동기적으로 로드하여 초기 표시 속도 향상"""
+        if self.providers_loaded:
+            return False
+            
+        # 한 번에 모든 프로바이더를 로드하는 대신 배치로 처리
+        providers = list(self.app.providers.values())
+        
+        def load_batch(start_index):
+            """프로바이더를 배치 단위로 로드"""
+            batch_size = 3  # 한 번에 3개씩 로드
+            end_index = min(start_index + batch_size, len(providers))
+            
+            for i in range(start_index, end_index):
+                provider = providers[i]
+                try:
+                    p = Provider(self.app, self, provider)
+                    self.provider_group.add(p)
+                except Exception as e:
+                    print(f"Failed to load provider {provider.name}: {e}")
+            
+            # 로딩 상태 업데이트
+            if hasattr(self, 'loading_row'):
+                progress = f"{end_index}/{len(providers)}"
+                self.loading_row.set_subtitle(_("Loading providers... ({})").format(progress))
+            
+            # 더 로드할 프로바이더가 있으면 다음 배치를 스케줄
+            if end_index < len(providers):
+                GLib.idle_add(lambda: load_batch(end_index))
+            else:
+                self.providers_loaded = True
+                # 로딩 완료 시 인디케이터 제거
+                self._remove_loading_indicator()
+            
+            return False
+        
+        # 첫 번째 배치 시작
+        load_batch(0)
+        return False
+    
     def load_providers(self):
+        """원래 메서드 (호환성 유지)"""
         for provider in self.app.providers.values():
             p = Provider(self.app, self, provider)
             self.provider_group.add(p)
@@ -77,6 +148,17 @@ class PreferencesWindow(Adw.PreferencesWindow):
         # 변경 시 콜백 연결
         self.font_button.connect("notify::font-desc", self.on_font_changed)
         self.line_height_spin.connect("notify::value", self.on_line_height_changed)
+
+    def setup_webkit_settings(self):
+        """WebKit 렌더링 설정 초기화"""
+        # 현재 설정 값 가져오기
+        webkit_enabled = self.settings.get_boolean("use-webkit-rendering")
+        
+        # 스위치에 현재 값 설정
+        self.webkit_rendering_switch.set_active(webkit_enabled)
+        
+        # 변경 시 콜백 연결
+        self.webkit_rendering_switch.connect("notify::active", self.on_webkit_rendering_changed)
 
     def on_font_changed(self, button, pspec):
         """폰트가 변경되었을 때 호출되는 메소드"""
@@ -112,6 +194,23 @@ class PreferencesWindow(Adw.PreferencesWindow):
         # 성공 토스트 표시
         toast = Adw.Toast()
         toast.set_title(_("Line height updated"))
+        if hasattr(self.parent, 'toast_overlay'):
+            self.parent.toast_overlay.add_toast(toast)
+
+    def on_webkit_rendering_changed(self, switch_row, pspec):
+        """WebKit 렌더링 설정이 변경되었을 때 호출되는 메소드"""
+        webkit_enabled = switch_row.get_active()
+        
+        # GSettings에 저장
+        self.settings.set_boolean("use-webkit-rendering", webkit_enabled)
+        
+        # 성공 토스트 표시
+        toast = Adw.Toast()
+        if webkit_enabled:
+            toast.set_title(_("Enhanced markdown rendering enabled"))
+        else:
+            toast.set_title(_("Enhanced markdown rendering disabled"))
+        
         if hasattr(self.parent, 'toast_overlay'):
             self.parent.toast_overlay.add_toast(toast)
 

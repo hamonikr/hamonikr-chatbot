@@ -37,8 +37,36 @@
   font-size: 9pt;
 }
 
+/* 코드 블록 스타일 */
+.code-block {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace;
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  color: @window_fg_color;
+}
+
 .sourceview {
-  font-family: monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Consolas', 'Monaco', monospace;
+  background-color: rgba(0, 0, 0, 0.03);
+  color: @window_fg_color;
+}
+
+/* 라이트 모드 줄번호 스타일 */
+.sourceview .line-numbers {
+  background-color: rgba(0, 0, 0, 0.02);
+  color: rgba(0, 0, 0, 0.4);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+textview.sourceview gutter {
+  background-color: rgba(0, 0, 0, 0.02);
+  color: rgba(0, 0, 0, 0.4);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+textview.sourceview gutter cell {
+  color: rgba(0, 0, 0, 0.4);
 }
 
 .tag {

@@ -13,6 +13,35 @@ except ImportError:
     from constants import app_id, rootdir
     from code_block import CodeBlock
 
+# MarkdownRenderer는 선택적으로 임포트 (없어도 기본 기능 동작)
+MARKDOWN_RENDERER_AVAILABLE = False
+try:
+    try:
+        from .markdown_renderer import MarkdownRenderer
+        MARKDOWN_RENDERER_AVAILABLE = True
+    except ImportError:
+        try:
+            from markdown_renderer import MarkdownRenderer
+            MARKDOWN_RENDERER_AVAILABLE = True
+        except ImportError:
+            pass
+except ImportError:
+    pass
+
+if not MARKDOWN_RENDERER_AVAILABLE:
+    # MarkdownRenderer를 사용할 수 없으므로 더미 클래스 생성
+    class MarkdownRenderer:
+        def __init__(self):
+            pass
+        def set_hexpand(self, value):
+            pass
+        def set_vexpand(self, value):
+            pass
+        def set_content_height(self, height):
+            pass
+        def render_markdown(self, content):
+            pass
+
 try:
     from builtins import _  # provided by gettext.install in launcher
 except ImportError:
@@ -30,12 +59,12 @@ EMPH="EMPH"
 PRE="PRE"
 LINK="LINK"
 m2p_sections = [
-    { "name": H1, "re": re.compile(r"^(#\s+)(.*)(\s*)$"), "sub": r"<big><big><big>\2</big></big></big>" },
-    { "name": H2, "re": re.compile(r"^(##\s+)(.*)(\s*)$"), "sub": r"<big><big>\2</big></big>" },
-    { "name": H3, "re": re.compile(r"^(###\s+)(.*)(\s*)$"), "sub": r"<big>\2</big>" },
+    { "name": H1, "re": re.compile(r"^(#\s+)(.*)(\s*)$"), "sub": r"<b>\2</b>" },
+    { "name": H2, "re": re.compile(r"^(##\s+)(.*)(\s*)$"), "sub": r"<b>\2</b>" },
+    { "name": H3, "re": re.compile(r"^(###\s+)(.*)(\s*)$"), "sub": r"<b>\2</b>" },
     { "name": UL, "re": re.compile(r"^(\s*[\*\-]\s)(.*)(\s*)$"), "sub": r" • \2" },
     { "name": OL, "re": re.compile(r"^(\s*[0-9]+\.\s)(.*)(\s*)$"), "sub": r" \1\2" },
-    { "name": CODE, "re": re.compile(r"^```[a-z_]*$"), "sub": "<tt>" },
+    { "name": CODE, "re": re.compile(r"^```.*$"), "sub": "<tt></tt>`" },
 ]
 
 m2p_styles = [
@@ -100,12 +129,16 @@ class Item(Gtk.Box):
             else:
                 self.image = self.content_text
         except Exception:
-            # 어시스턴트 메시지이고 마크다운 콘텐츠가 있으면 WebView 렌더링 사용
+            # 설정에서 WebKit 렌더링이 활성화되어 있고, 어시스턴트 메시지이며, 마크다운 콘텐츠가 있으면 WebView 렌더링 사용
             role = self.item["role"].lower()
-            if (role == self.app.bot_name.lower() or role == "assistant") and self._has_markdown_content():
+            use_webkit = self.settings.get_boolean("use-webkit-rendering")  # GSettings에서 읽기
+            
+            if (use_webkit and 
+                (role == self.app.bot_name.lower() or role == "assistant") and 
+                self._has_markdown_content()):
                 self._render_with_webview()
             else:
-                # 기존 방식으로 렌더링 (사용자 메시지 또는 단순 텍스트)
+                # 기존 방식으로 렌더링 (기본값) - 원래의 Pango 렌더링 사용
                 self._render_with_pango()
         else:
             # 이미지인 경우의 처리
@@ -127,47 +160,60 @@ class Item(Gtk.Box):
         if not self.content_text or not isinstance(self.content_text, str):
             return False
         
+        content = str(self.content_text)
+        
+        # 단순한 체크로 변경 - 더 많은 케이스를 마크다운으로 처리
         markdown_indicators = [
             r'```',  # 코드 블록
             r'`[^`]+`',  # 인라인 코드
             r'#{1,6}\s',  # 헤딩
             r'\*\*[^*]+\*\*',  # 볼드
-            r'\*[^*]+\*',  # 이탤릭
+            r'\*[^*]+\*(?!\*)',  # 이탤릭
             r'\[[^\]]+\]\([^)]+\)',  # 링크
             r'^\s*[\*\-\+]\s',  # 리스트
             r'^\s*\d+\.\s',  # 번호 목록
             r'^\s*>',  # 인용문
             r'^\s*\|.*\|\s*$',  # 테이블 행
             r'^\s*\|[\s\-\:]*\|\s*$',  # 테이블 구분자
+            r'---+',  # 수평선
+            r'===+',  # 수평선 (다른 형태)
         ]
         
-        content = str(self.content_text)
         for pattern in markdown_indicators:
             if re.search(pattern, content, re.MULTILINE):
                 return True
+        
+        # 긴 텍스트이거나 여러 줄이면 마크다운으로 처리 (더 나은 렌더링을 위해)
+        if len(content) > 200 or content.count('\n') > 3:
+            return True
+            
         return False
     
     def _render_with_webview(self):
-        """개선된 마크다운 렌더링 (WebKit 사용 가능시만)"""
-        try:
-            # WebKit 사용 가능한지 확인
+        """MarkdownRenderer를 사용한 마크다운 렌더링 (사용 가능한 경우)"""
+        if MARKDOWN_RENDERER_AVAILABLE:
             try:
-                from gi.repository import WebKit2
-                webkit_available = True
-            except ImportError:
-                webkit_available = False
-            
-            if webkit_available:
-                # WebKit 기반 렌더링은 일단 비활성화하고 개선된 Pango 사용
-                self._render_enhanced_pango()
-            else:
-                # WebKit 사용 불가시 개선된 Pango 렌더링 사용
-                self._render_enhanced_pango()
-            
-        except Exception as e:
-            # 모든 실패 시 기존 방식으로 폴백
-            print(f"Enhanced rendering failed, falling back to basic Pango: {e}")
-            self._render_with_pango()
+                # MarkdownRenderer 사용
+                markdown_renderer = MarkdownRenderer()
+                markdown_renderer.set_hexpand(True)
+                markdown_renderer.set_vexpand(False)  # 내용에 맞게 높이 조정
+                
+                # 마크다운 콘텐츠 렌더링
+                markdown_renderer.render_markdown(self.content_text)
+                
+                # 위젯을 content에 추가
+                self.content.append(markdown_renderer)
+                
+                # UI 요소들 설정 (복사 버튼, 모델 정보, 시간 등)
+                self._setup_ui_elements()
+                return
+                
+            except Exception as e:
+                # MarkdownRenderer 실패 시 개선된 Pango로 폴백
+                print(f"MarkdownRenderer failed, falling back to enhanced Pango: {e}")
+        
+        # MarkdownRenderer가 없거나 실패한 경우 기존 Pango 사용
+        self._render_with_pango()
     
     def _render_enhanced_pango(self):
         """개선된 Pango 마크업 렌더링 (마크다운 기본 지원)"""
@@ -199,6 +245,9 @@ class Item(Gtk.Box):
             label.add_css_class("message-content")
             
             self.content.append(label)
+            
+            # UI 요소들 설정 (복사 버튼, 모델 정보, 시간 등)
+            self._setup_ui_elements()
             
         except Exception as e:
             print(f"Enhanced Pango rendering failed: {e}")
@@ -279,6 +328,42 @@ class Item(Gtk.Box):
             parts.append(escaped_text)
         
         return ''.join(parts)
+    
+    def _setup_ui_elements(self):
+        """UI 요소들 설정 (복사 버튼, 모델 정보, 시간 등) - 공통 메서드"""
+        t = self.item["role"].lower()
+
+        if t == self.app.user_name.lower() or t == "user": # User
+            self.message_bubble.add_css_class("message-bubble-user")
+            self.avatar.add_css_class("avatar-user")
+            role = self.app.user_name
+            # 사용자 메시지에는 복사 버튼과 모델 정보 숨김
+            self.copy_button.set_visible(False)
+            self.model.set_visible(False)
+        elif t == self.app.bot_name.lower() or t == "assistant": # Assistant
+            self.avatar.set_icon_name("bot-symbolic")
+            self.user.add_css_class("warning")
+            role = self.app.bot_name
+            # Assistant 메시지에만 복사 버튼과 모델 정보 표시
+            self.copy_button.set_visible(True)
+            self.model.set_visible(True)
+            # 모델 라벨이 확실히 보이도록 강제 설정
+            self.model.set_opacity(1.0)
+            self.model.set_sensitive(True)
+        else:
+            role = t
+            self.copy_button.set_visible(False)
+            self.model.set_visible(False)
+
+        self.timestamp.set_text(self.item.get("time", ""))
+        model_text = self.item.get("model", "")
+        
+        self.model.set_text(model_text)
+
+        self.avatar.set_text(role)
+        self.user.set_text(role)
+
+        self.setup()
     
     def _process_markdown_tables(self, content):
         """마크다운 테이블을 HTML 테이블로 변환"""
@@ -416,46 +501,31 @@ class Item(Gtk.Box):
                         max_width = max(max_width, len(str(row[col])))
                 col_widths.append(min(max_width, 20))  # 최대 20자로 제한
             
-            # 테이블 텍스트 생성
+            # 단순한 텍스트 테이블 생성 (박스 문자 없이)
             result = []
             
             # 헤더
             if headers:
-                header_line = "┌" + "┬".join("─" * (w + 2) for w in col_widths) + "┐"
+                header_line = "| " + " | ".join(f"{header}" for header in headers) + " |"
                 result.append(header_line)
                 
-                header_cells = []
-                for i, header in enumerate(headers):
-                    if i < len(col_widths):
-                        cell = f" {header:<{col_widths[i]}} "
-                        header_cells.append(cell)
-                result.append("│" + "│".join(header_cells) + "│")
-                
-                separator = "├" + "┼".join("─" * (w + 2) for w in col_widths) + "┤"
+                # 구분선
+                separator = "|" + "|".join("-" * (len(header) + 2) for header in headers) + "|"
                 result.append(separator)
             
             # 데이터 행
-            for row_idx, row in enumerate(rows):
-                row_cells = []
-                for i, cell in enumerate(row):
-                    if i < len(col_widths):
-                        # 긴 텍스트는 잘라내기
-                        cell_text = str(cell)
-                        if len(cell_text) > col_widths[i]:
-                            cell_text = cell_text[:col_widths[i]-1] + "…"
-                        cell_formatted = f" {cell_text:<{col_widths[i]}} "
-                        row_cells.append(cell_formatted)
+            for row in rows:
+                if headers:
+                    # 헤더가 있을 때는 헤더 개수에 맞춤
+                    row_data = row[:len(headers)] if len(row) > len(headers) else row
+                    # 부족한 셀은 빈 문자열로 채움
+                    while len(row_data) < len(headers):
+                        row_data.append("")
+                else:
+                    row_data = row
                 
-                if not headers and row_idx == 0:
-                    # 헤더가 없으면 첫 번째 행 전에 상단 경계
-                    top_line = "┌" + "┬".join("─" * (w + 2) for w in col_widths) + "┐"
-                    result.append(top_line)
-                
-                result.append("│" + "│".join(row_cells) + "│")
-            
-            # 하단 경계
-            bottom_line = "└" + "┴".join("─" * (w + 2) for w in col_widths) + "┘"
-            result.append(bottom_line)
+                row_line = "| " + " | ".join(f"{str(cell)}" for cell in row_data) + " |"
+                result.append(row_line)
             
             return "\n".join(result) + "\n"
         
@@ -519,39 +589,8 @@ class Item(Gtk.Box):
                 label.add_css_class("message-content")  # 폰트 설정을 위한 CSS 클래스 추가
                 self.content.append(label)
 
-        t = self.item["role"].lower()
-
-        if t == self.app.user_name.lower() or t == "user": # User
-            self.message_bubble.add_css_class("message-bubble-user")
-            self.avatar.add_css_class("avatar-user")
-            role = self.app.user_name
-            # 사용자 메시지에는 복사 버튼과 모델 정보 숨김
-            self.copy_button.set_visible(False)
-            self.model.set_visible(False)
-        elif t == self.app.bot_name.lower() or t == "assistant": # Assistant
-            self.avatar.set_icon_name("bot-symbolic")
-            self.user.add_css_class("warning")
-            role = self.app.bot_name
-            # Assistant 메시지에만 복사 버튼과 모델 정보 표시
-            self.copy_button.set_visible(True)
-            self.model.set_visible(True)
-            # 모델 라벨이 확실히 보이도록 강제 설정
-            self.model.set_opacity(1.0)
-            self.model.set_sensitive(True)
-        else:
-            role = t
-            self.copy_button.set_visible(False)
-            self.model.set_visible(False)
-
-        self.timestamp.set_text(self.item.get("time", ""))
-        model_text = self.item.get("model", "")
-        
-        self.model.set_text(model_text)
-
-        self.avatar.set_text(role)
-        self.user.set_text(role)
-
-        self.setup()
+        # UI 요소들 설정 (복사 버튼, 모델 정보, 시간 등)
+        self._setup_ui_elements()
 
     def setup(self):
         self.setup_signals()
@@ -759,24 +798,14 @@ class Item(Gtk.Box):
                         if not is_code:
                             code_start = True
                             is_code = True
-
-                            result = ""
-
-                            #if self.color_span_open:
-                            #    result = '<tt>'
-                            #    tt_must_close = False
-                            #else:
-                            #    result = "<span foreground='#bbb' background='#222'>" + '<tt>'
-                            #    tt_must_close = True
+                            # 코드 블록 시작 마커 추가
+                            result = "<tt></tt>`"
                         else:
                             is_code = False
-                            #output.append(...pad(code_lines).map(escape_line))
+                            # 코드 블록 끝 마커 추가
                             output.append(code_lines)
                             code_lines = []
-                            #result = '</tt>'
-                            if tt_must_close:
-                                result += '</span>'
-                                tt_must_close = False
+                            result = "<tt></tt>`"
                     else:
                         if is_code:
                             result = line
@@ -795,7 +824,8 @@ class Item(Gtk.Box):
             
 
             if re_h2line.match(line):
-                output.append(re.sub(m2p_sections[1]["re"], m2p_sections[1]["sub"], f"# {output.pop()}"))
+                # "---"는 수평선으로 처리 (헤딩으로 변환하지 않음)
+                output.append("─" * 50)  # 유니코드 수평선 문자
                 continue
             
             for style in m2p_styles:

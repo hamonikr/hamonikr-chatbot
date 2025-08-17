@@ -8,6 +8,10 @@ except ImportError:
 import subprocess
 from subprocess import SubprocessError, CompletedProcess
 import os
+import gettext
+
+# gettext 설정
+_ = gettext.gettext
 
 GtkSource.init()
 
@@ -29,6 +33,10 @@ class CodeBlock(Gtk.Widget):
         self.command = result
 
         self.buffer.set_text(self.command)
+        
+        # CSS 클래스 추가로 폰트 설정 적용
+        self.source_view.add_css_class("code-block")
+        self.output_source_view.add_css_class("code-block")
 
         self._apply_sourceview_scheme()
 
@@ -41,9 +49,23 @@ class CodeBlock(Gtk.Widget):
 
     @Gtk.Template.Callback()
     def run(self, widget, *args):
-        command = self.buffer.props.text.split(" ")
-        if self.command.startswith("$"):
-            command.pop(0)
+        command_text = self.buffer.props.text.strip()
+        if not command_text:
+            return
+        
+        # $ 기호로 시작하는 경우 제거
+        if command_text.startswith("$"):
+            command_text = command_text[1:].strip()
+        
+        # 주석이나 빈 줄 무시
+        if command_text.startswith("#") or not command_text:
+            self.output_buffer.set_text("# 주석은 실행할 수 없습니다.")
+            self.output.set_visible(True)
+            return
+        
+        command = command_text.split()
+        if not command:
+            return
 
         portal = Xdp.Portal()
         is_sandboxed = portal.running_under_sandbox()
@@ -65,9 +87,11 @@ class CodeBlock(Gtk.Widget):
                 else:
                     output = process.stdout
         except SubprocessError as e:
-            output = e.stdout
-        except FileNotFoundError:
-            raise
+            output = e.stdout if hasattr(e, 'stdout') else str(e)
+        except FileNotFoundError as e:
+            output = f"명령어를 찾을 수 없습니다: {command[0]}"
+        except Exception as e:
+            output = f"실행 오류: {str(e)}"
 
         o = ""
 
