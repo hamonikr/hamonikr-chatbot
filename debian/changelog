@@ -1,6 +1,17 @@
 hamonikr-chatbot (1.2.7) unstable; urgency=medium
 
   * Release v1.2.7
+  * add WebKit rendering option and enhance markdown support
+  * enhance virtual environment activation and add markdown rendering
+    support
+  * enhance file upload functionality and improve context handling
+  * dch 명령어 changelog 엔트리 처리 로직 개선
+
+ -- HamoniKR <pkg@hamonikr.org>  Sun, 17 Aug 2025 17:23:03 +0900
+
+hamonikr-chatbot (1.2.7) unstable; urgency=medium
+
+  * Release v1.2.7
 
  -- HamoniKR <pkg@hamonikr.org>  Sun, 17 Aug 2025 13:04:30 +0900
 
