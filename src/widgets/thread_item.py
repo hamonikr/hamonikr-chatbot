@@ -5,12 +5,37 @@ try:
 except ImportError:
     from constants import app_id, rootdir
 
-@Gtk.Template(resource_path=f"{rootdir}/ui/thread_item.ui")
 class ThreadItem(Gtk.Box):
-    __gtype_name__ = "ThreadItem"
+    def __init__(self, parent, chat, **kwargs):
+        super().__init__(orientation=Gtk.Orientation.HORIZONTAL, **kwargs)
+        
+        # UI 요소들을 직접 생성
+        self.label = Gtk.Inscription()
+        self.label.set_hexpand(True)
+        self.label.set_xalign(0)
+        self.label.set_text_overflow(Gtk.TextOverflow.ELLIPSIZE_END)
+        
+        # Popover 메뉴 생성
+        self.popover = Gtk.PopoverMenu()
+        self.popover.set_menu_model(self.create_popover_menu())
+        
+        # 위젯들을 Box에 추가
+        self.append(self.label)
+        
+        self.chat = chat
+        self.id = chat["id"]
+        self.label_text = chat["title"]
+        self.is_starred = chat.get("starred", False)
 
-    label = Gtk.Template.Child()
-    popover = Gtk.Template.Child()
+        self.label.set_text(self.label_text)
+
+        self.parent = parent
+        self.settings = parent.settings
+
+        self.app = self.parent.get_application()
+        self.win = self.app.get_active_window()
+
+        self.setup()
 
     edit_mode = False
 

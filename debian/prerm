@@ -1,0 +1,137 @@
+#!/bin/bash
+
+# HamoniKR Chatbot - Debian Package Pre-Removal Script
+# This script runs before package removal to clean up user environments
+
+set -e
+
+# Configuration
+PACKAGE_NAME="hamonikr-chatbot"
+VENV_NAME="hamonikr-chatbot-venv"
+
+# Function to clean up user environment
+cleanup_user_env() {
+    local user="$1"
+    local home_dir="$2"
+    local venv_path="$home_dir/.local/share/$VENV_NAME"
+    
+    # Skip if user home directory doesn't exist
+    if [ ! -d "$home_dir" ]; then
+        return 0
+    fi
+    
+    # Skip system users (uid < 1000)
+    local user_id
+    user_id=$(id -u "$user" 2>/dev/null || echo "0")
+    if [ "$user_id" -lt 1000 ]; then
+        return 0
+    fi
+    
+    echo "Cleaning up HamoniKR Chatbot environment for user: $user"
+    
+    # Remove virtual environment if it exists
+    if [ -d "$venv_path" ]; then
+        echo "  Removing virtual environment: $venv_path"
+        sudo -u "$user" rm -rf "$venv_path" 2>/dev/null || {
+            echo "  Warning: Could not remove virtual environment for user $user"
+        }
+    fi
+    
+    # Remove desktop shortcut if it exists
+    local desktop_file="$home_dir/.local/share/applications/hamonikr-chatbot.desktop"
+    if [ -f "$desktop_file" ]; then
+        echo "  Removing desktop shortcut: $desktop_file"
+        sudo -u "$user" rm -f "$desktop_file" 2>/dev/null || true
+    fi
+    
+    # Remove activation script if it exists
+    local activation_script="$home_dir/.local/bin/activate-hamonikr-chatbot.sh"
+    if [ -f "$activation_script" ]; then
+        echo "  Removing activation script: $activation_script"
+        sudo -u "$user" rm -f "$activation_script" 2>/dev/null || true
+    fi
+}
+
+# Function to ask user about cleanup
+ask_cleanup_confirmation() {
+    echo "HamoniKR Chatbot removal detected."
+    echo "This will also remove user virtual environments and settings."
+    echo ""
+    
+    # In non-interactive mode, default to cleanup
+    if [ ! -t 0 ]; then
+        echo "Running in non-interactive mode, proceeding with cleanup..."
+        return 0
+    fi
+    
+    # Interactive mode - ask user
+    while true; do
+        echo -n "Do you want to remove user data and virtual environments? [Y/n]: "
+        read -r response
+        case "$response" in
+            [Yy]*|"")
+                return 0
+                ;;
+            [Nn]*)
+                echo "Keeping user data and virtual environments."
+                return 1
+                ;;
+            *)
+                echo "Please answer yes or no."
+                ;;
+        esac
+    done
+}
+
+# Main removal logic
+case "$1" in
+    remove|upgrade|deconfigure)
+        if [ "$1" = "remove" ]; then
+            echo "Preparing to remove HamoniKR Chatbot..."
+            
+            # Ask for cleanup confirmation
+            if ask_cleanup_confirmation; then
+                echo "Cleaning up user environments..."
+                
+                # Clean up for all regular users
+                while IFS=: read -r username _ uid _ _ home_dir _; do
+                    if [ "$uid" -ge 1000 ] && [ -d "$home_dir" ]; then
+                        cleanup_user_env "$username" "$home_dir"
+                    fi
+                done < /etc/passwd
+                
+                echo "User environment cleanup completed."
+            fi
+            
+            # Remove system-wide files
+            echo "Removing system-wide configuration files..."
+            
+            # Remove autostart notification
+            if [ -f "/etc/xdg/autostart/hamonikr-chatbot-setup-notify.desktop" ]; then
+                rm -f "/etc/xdg/autostart/hamonikr-chatbot-setup-notify.desktop"
+            fi
+            
+            # Remove setup flag
+            if [ -f "/usr/share/hamonikr-chatbot/.postinst-setup-needed" ]; then
+                rm -f "/usr/share/hamonikr-chatbot/.postinst-setup-needed"
+            fi
+            
+            # Remove setup script
+            if [ -f "/usr/share/hamonikr-chatbot/setup-user-env.sh" ]; then
+                rm -f "/usr/share/hamonikr-chatbot/setup-user-env.sh"
+            fi
+        fi
+        ;;
+        
+    failed-upgrade)
+        ;;
+        
+    *)
+        echo "prerm called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0
