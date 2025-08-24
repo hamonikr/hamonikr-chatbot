@@ -1,0 +1,116 @@
+#!/bin/bash
+
+# HamoniKR Chatbot - Debian Package Post-Installation Script
+# This script runs after package installation to set up user environment
+
+set -e
+
+# Configuration
+PACKAGE_NAME="hamonikr-chatbot"
+SETUP_SCRIPT="/usr/share/hamonikr-chatbot/scripts/debian-post-install.sh"
+
+# Function to run setup for a user
+setup_for_user() {
+    local user="$1"
+    local home_dir="$2"
+    
+    # Skip if user home directory doesn't exist
+    if [ ! -d "$home_dir" ]; then
+        return 0
+    fi
+    
+    # Skip system users (uid < 1000)
+    local user_id
+    user_id=$(id -u "$user" 2>/dev/null || echo "0")
+    if [ "$user_id" -lt 1000 ]; then
+        return 0
+    fi
+    
+    echo "Setting up HamoniKR Chatbot for user: $user"
+    
+    # Run setup script as the user
+    if [ -x "$SETUP_SCRIPT" ]; then
+        sudo -u "$user" -H bash -c "cd '$home_dir' && '$SETUP_SCRIPT'" || {
+            echo "Warning: Setup failed for user $user. They can run it manually later."
+            return 0
+        }
+    else
+        echo "Warning: Setup script not found at $SETUP_SCRIPT"
+        return 1
+    fi
+}
+
+# Function to create system-wide notification script
+create_notification_script() {
+    cat > /usr/share/hamonikr-chatbot/setup-user-env.sh << 'EOF'
+#!/bin/bash
+
+# HamoniKR Chatbot User Environment Setup
+# This script can be run by users to set up their environment
+
+SETUP_SCRIPT="/usr/share/hamonikr-chatbot/scripts/debian-post-install.sh"
+
+if [ -x "$SETUP_SCRIPT" ]; then
+    echo "Setting up HamoniKR Chatbot environment for $(whoami)..."
+    exec "$SETUP_SCRIPT"
+else
+    echo "Error: Setup script not found at $SETUP_SCRIPT"
+    exit 1
+fi
+EOF
+    
+    chmod +x /usr/share/hamonikr-chatbot/setup-user-env.sh
+}
+
+# Main installation logic
+case "$1" in
+    configure)
+        echo "Configuring HamoniKR Chatbot..."
+        
+        # Create notification script
+        create_notification_script
+        
+        # Create a flag file to indicate post-install setup is needed
+        touch /usr/share/hamonikr-chatbot/.postinst-setup-needed
+        
+        # Create a desktop notification for setup
+        cat > /etc/xdg/autostart/hamonikr-chatbot-setup-notify.desktop << EOF
+[Desktop Entry]
+Type=Application
+Name=HamoniKR Chatbot Setup Notification
+Comment=Notify user about HamoniKR Chatbot setup
+Exec=/bin/bash -c 'if [ -f /usr/share/hamonikr-chatbot/.postinst-setup-needed ] && [ ! -f "\$HOME/.local/share/hamonikr-chatbot-venv/pyvenv.cfg" ]; then notify-send "HamoniKR Chatbot" "Initial setup required. Run: /usr/share/hamonikr-chatbot/setup-user-env.sh"; fi'
+Terminal=false
+Hidden=false
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
+OnlyShowIn=GNOME;Unity;MATE;XFCE;KDE;X-Cinnamon;
+X-GNOME-Autostart-Delay=10
+EOF
+        
+        # Try to setup for current user if we're in a user session
+        if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
+            USER_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+            if [ -d "$USER_HOME" ]; then
+                echo "Setting up for current user: $SUDO_USER"
+                setup_for_user "$SUDO_USER" "$USER_HOME" || true
+            fi
+        fi
+        
+        echo "HamoniKR Chatbot installation completed."
+        echo "Users may need to run: /usr/share/hamonikr-chatbot/setup-user-env.sh"
+        echo "or the application will automatically set up on first run."
+        ;;
+        
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+        
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

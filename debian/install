@@ -1,2 +1,6 @@
 # Install files not automatically handled by debhelper
 # Most files should be handled by meson's install target
+
+# Install essential scripts and dependencies only
+scripts/* usr/share/hamonikr-chatbot/scripts/
+requirements.txt usr/share/hamonikr-chatbot/
