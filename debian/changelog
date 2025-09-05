@@ -1,3 +1,14 @@
+hamonikr-chatbot (1.2.9) unstable; urgency=medium
+
+  * Release v1.2.9
+  * Add image upload support to file attachment feature
+  * Implement image resizing and base64 encoding for AI processing
+  * Add vision model support for OpenAI GPT-4V, Anthropic Claude, and Google Gemini
+  * Support multiple image formats (PNG, JPG, JPEG, GIF, BMP, WebP, ICO)
+  * Enhance file extractor with PIL/Pillow image processing capabilities
+
+ -- HamoniKR <pkg@hamonikr.org>  Thu, 05 Sep 2025 14:37:00 +0900
+
 hamonikr-chatbot (1.2.8) unstable; urgency=medium
 
   * Release v1.2.8

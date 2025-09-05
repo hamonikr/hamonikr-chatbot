@@ -6,48 +6,44 @@ except ImportError:
     from constants import app_id, rootdir
 
 class ThreadItem(Gtk.Box):
+    edit_mode = False
+    
     def __init__(self, parent, chat, **kwargs):
         super().__init__(orientation=Gtk.Orientation.HORIZONTAL, **kwargs)
+        self.set_spacing(6)
         
         # UI 요소들을 직접 생성
         self.label = Gtk.Inscription()
         self.label.set_hexpand(True)
         self.label.set_xalign(0)
-        self.label.set_text_overflow(Gtk.TextOverflow.ELLIPSIZE_END)
+        self.label.set_text_overflow(Gtk.InscriptionOverflow.ELLIPSIZE_END)
         
-        # Popover 메뉴 생성
-        self.popover = Gtk.PopoverMenu()
-        self.popover.set_menu_model(self.create_popover_menu())
+        # 삭제 버튼 추가
+        self.delete_button = Gtk.Button()
+        self.delete_button.set_icon_name("user-trash-symbolic")
+        self.delete_button.add_css_class("flat")
+        self.delete_button.set_tooltip_text(_("Delete"))
+        self.delete_button.connect("clicked", self.on_delete)
+        self.delete_button.set_visible(False)  # 기본적으로 숨김
         
         # 위젯들을 Box에 추가
         self.append(self.label)
+        self.append(self.delete_button)
+        
+        # 마우스 호버 이벤트 추가
+        motion_controller = Gtk.EventControllerMotion()
+        motion_controller.connect("enter", self.on_mouse_enter)
+        motion_controller.connect("leave", self.on_mouse_leave)
+        self.add_controller(motion_controller)
         
         self.chat = chat
         self.id = chat["id"]
         self.label_text = chat["title"]
         self.is_starred = chat.get("starred", False)
 
-        self.label.set_text(self.label_text)
-
-        self.parent = parent
-        self.settings = parent.settings
-
-        self.app = self.parent.get_application()
-        self.win = self.app.get_active_window()
-
-        self.setup()
-
-    edit_mode = False
-
-    def __init__(self, parent, chat, **kwargs):
-        super().__init__(**kwargs)
-
-        self.chat = chat
-        self.id = chat["id"]
-        self.label_text = chat["title"]
-        self.is_starred = chat.get("starred", False)
-
-        self.label.set_text(self.label_text)
+        # 텍스트 길이 제한 (최대 20자)
+        display_text = self.label_text[:20] + "..." if len(self.label_text) > 20 else self.label_text
+        self.label.set_text(display_text)
 
         self.parent = parent
         self.settings = parent.settings
@@ -67,9 +63,15 @@ class ThreadItem(Gtk.Box):
 
         #self.update_star()
 
+    def on_mouse_enter(self, controller, x, y):
+        self.delete_button.set_visible(True)
+    
+    def on_mouse_leave(self, controller):
+        self.delete_button.set_visible(False)
+    
     def show_menu(self, gesture, data, x, y):
-        self.popover.set_parent(self)
-        self.popover.popup()
+        # Popover가 없으므로 주석 처리
+        pass
 
     def setup_signals(self):
         self.action_group = Gio.SimpleActionGroup()

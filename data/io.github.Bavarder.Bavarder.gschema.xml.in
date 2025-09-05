@@ -43,6 +43,16 @@
 		<key name="use-webkit-rendering" type="b">
 			<default>false</default>
 		</key>
+		<key name="system-prompt" type="s">
+			<default>''</default>
+			<summary>Custom system prompt</summary>
+			<description>User-defined system prompt for AI conversations</description>
+		</key>
+		<key name="mcp-servers" type="s">
+			<default>'[]'</default>
+			<summary>MCP server configurations</summary>
+			<description>JSON string containing MCP server configurations</description>
+		</key>
 
 	</schema>
 </schemalist>

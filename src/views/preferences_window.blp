@@ -3,8 +3,8 @@ using Adw 1;
 
 template $Preferences : Adw.PreferencesWindow {
   title: _("Preferences");
-  default-height: 400;
-  default-width: 600;
+  default-height: 600;
+  default-width: 800;
   modal: true;
 
   Adw.PreferencesPage general_page {
@@ -16,6 +16,64 @@ template $Preferences : Adw.PreferencesWindow {
     }
 
     // model_group 제거 (하단 모델 레이블/그룹 숨김)
+  }
+
+  Adw.PreferencesPage {
+    title: _("System Prompts");
+    icon-name: "document-edit-symbolic";
+
+    Adw.PreferencesGroup {
+      title: _("System Prompt");
+      description: _("Define a custom system prompt for AI conversations");
+
+      Adw.PreferencesRow {
+        Box {
+          orientation: vertical;
+          spacing: 12;
+          margin-top: 12;
+          margin-bottom: 12;
+          margin-start: 12;
+          margin-end: 12;
+
+          Label {
+            label: _("System Prompt:");
+            xalign: 0;
+            styles ["heading"]
+          }
+
+          ScrolledWindow {
+            height-request: 300;
+            
+            TextView system_prompt_text {
+              wrap-mode: word_char;
+              accepts-tab: false;
+              left-margin: 12;
+              right-margin: 12;
+              top-margin: 12;
+              bottom-margin: 12;
+              styles ["card"]
+            }
+          }
+
+          Box {
+            orientation: horizontal;
+            spacing: 6;
+            halign: end;
+
+            Button clear_system_prompt_btn {
+              label: _("Clear");
+              clicked => $on_clear_system_prompt();
+            }
+
+            Button apply_system_prompt_btn {
+              label: _("Apply");
+              clicked => $on_apply_system_prompt();
+              styles ["suggested-action"]
+            }
+          }
+        }
+      }
+    }
   }
 
   Adw.PreferencesPage {

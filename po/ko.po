@@ -588,3 +588,30 @@ msgstr "지원되지 않는 파일 형식"
 
 msgid "Failed to process file: %s"
 msgstr "파일 처리 실패: %s"
+
+msgid "System Prompts"
+msgstr "프롬프트"
+
+msgid "MCP Servers"
+msgstr "MCP서버"
+
+msgid "Apply"
+msgstr "적용"
+
+msgid "Define a custom system prompt for AI conversations"
+msgstr "AI 대화를 위한 사용자 정의 시스템 프롬프트 정의"
+
+msgid "System Prompt:"
+msgstr "시스템 프롬프트:"
+
+msgid "MCP Server Configuration"
+msgstr "MCP 서버 구성"
+
+msgid "Manage Model Context Protocol servers"
+msgstr "Model Context Protocol 서버 관리"
+
+msgid "MCP Servers:"
+msgstr "MCP 서버:"
+
+msgid "Add MCP Server"
+msgstr "MCP 서버 추가"

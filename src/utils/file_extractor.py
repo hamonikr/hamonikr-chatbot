@@ -8,6 +8,8 @@ import os
 import mimetypes
 from pathlib import Path
 from typing import Optional, Tuple
+import base64
+from io import BytesIO
 
 # 조건부 import - 라이브러리가 없어도 기본 기능은 동작하도록
 try:
@@ -40,6 +42,12 @@ try:
 except ImportError:
     PPTX_AVAILABLE = False
 
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
+
 
 class FileExtractor:
     """다양한 파일 형식에서 텍스트를 추출하는 클래스"""
@@ -68,6 +76,10 @@ class FileExtractor:
         
         if PPTX_AVAILABLE or MARKITDOWN_AVAILABLE:
             extensions.append('.pptx')
+        
+        # 이미지 형식 추가
+        if PIL_AVAILABLE:
+            extensions.extend(['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.ico'])
         
         return extensions
     
@@ -243,13 +255,18 @@ class FileExtractor:
         try:
             file_path_obj = Path(file_path)
             file_size = os.path.getsize(file_path)
+            extension = file_path_obj.suffix.lower()
+            
+            # 이미지 파일인지 확인
+            is_image = extension in ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.ico']
             
             return {
                 'name': file_path_obj.name,
-                'extension': file_path_obj.suffix.lower(),
+                'extension': extension,
                 'size': file_size,
                 'size_mb': round(file_size / (1024 * 1024), 2),
-                'supported': file_path_obj.suffix.lower() in self.get_supported_extensions()
+                'supported': extension in self.get_supported_extensions(),
+                'is_image': is_image
             }
         except Exception:
             return {
@@ -257,5 +274,55 @@ class FileExtractor:
                 'extension': '',
                 'size': 0,
                 'size_mb': 0,
-                'supported': False
+                'supported': False,
+                'is_image': False
             }
+    
+    def is_image_file(self, file_path: str) -> bool:
+        """파일이 이미지인지 확인"""
+        extension = Path(file_path).suffix.lower()
+        return extension in ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.ico']
+    
+    def process_image(self, file_path: str, max_size: int = 1024) -> Tuple[bool, str, Optional[str]]:
+        """
+        이미지를 처리하여 base64로 인코딩
+        
+        Args:
+            file_path: 이미지 파일 경로
+            max_size: 최대 크기 (가로 또는 세로)
+            
+        Returns:
+            Tuple[success: bool, base64_data: str, error_message: Optional[str]]
+        """
+        if not PIL_AVAILABLE:
+            return False, "", "PIL library is not available"
+        
+        try:
+            # 이미지 열기
+            with Image.open(file_path) as img:
+                # RGBA를 RGB로 변환 (PNG 투명도 처리)
+                if img.mode in ('RGBA', 'LA'):
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else img.split()[1])
+                    img = background
+                elif img.mode not in ('RGB', 'L'):
+                    img = img.convert('RGB')
+                
+                # 이미지 크기 조정
+                img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                
+                # BytesIO에 저장
+                buffer = BytesIO()
+                img.save(buffer, format='JPEG', quality=85, optimize=True)
+                buffer.seek(0)
+                
+                # base64로 인코딩
+                img_base64 = base64.b64encode(buffer.read()).decode('utf-8')
+                
+                # 이미지 형식과 함께 data URL 생성
+                data_url = f"data:image/jpeg;base64,{img_base64}"
+                
+                return True, data_url, None
+                
+        except Exception as e:
+            return False, "", f"Error processing image: {str(e)}"
