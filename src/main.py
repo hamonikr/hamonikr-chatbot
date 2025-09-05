@@ -232,6 +232,9 @@ class BavarderApplication(Adw.Application):
 
         self.bot_name = self.settings.get_string("bot-name")
         self.user_name = self.settings.get_string("user-name")
+        
+        # 시스템 프롬프트 초기화
+        self.system_prompt = self.settings.get_string("system-prompt")
 
         # 테마 상태 액션 등록
         self.create_stateful_action(
@@ -344,7 +347,14 @@ class BavarderApplication(Adw.Application):
 
     def get_file_context_prompt(self):
         """앱 레벨에서 파일 컨텍스트 프롬프트 반환"""
-        if self.attached_file_content and self.attached_file_name:
+        if hasattr(self, 'attached_image_data') and self.attached_image_data:
+            # 이미지가 첨부된 경우
+            context = f"""An image file has been uploaded: {self.attached_file_name if hasattr(self, 'attached_file_name') else 'image'}
+
+Please analyze the image and use it to answer the user's questions."""
+            return context
+        elif self.attached_file_content and self.attached_file_name:
+            # 텍스트 파일이 첨부된 경우
             context = f"""You have access to the following file content for context:
 
 ## File: {self.attached_file_name}
@@ -370,6 +380,8 @@ Please analyze the above file content and use it to answer the user's questions.
     def on_quit(self, action, *args, **kwargs):
         """Called when the user activates the Quit action."""
         self.save()
+        
+            
         self.quit()
 
     def on_close(self, action, *args, **kwargs):
@@ -409,6 +421,7 @@ Please analyze the above file content and use it to answer the user's questions.
         necessary.
         """
         self.new_window()
+        
 
         # 창이 처음 생성될 때 CLI 프롬프트가 있으면 전송 예약
         if getattr(self, "initial_prompt", None):
@@ -590,15 +603,22 @@ Please analyze the above file content and use it to answer the user's questions.
             else:
                 system_template = f"""You are a helpful and friendly AI assistant with the name {self.bot_name}. The name of the user are {self.user_name}. Respond very concisely."""
                 try:
+                    # 사용자 정의 시스템 프롬프트 확인
+                    user_system_prompt = self.system_prompt if hasattr(self, 'system_prompt') and self.system_prompt else ""
+                    
                     # 지속적인 파일 컨텍스트 확인 (앱 레벨에서)
                     file_context = self.get_file_context_prompt() or ""
                     
                     # 일회성 시스템 프롬프트 확인
                     transient_prompt = getattr(self, "transient_system_prompt", None) or ""
                     
-                    # 파일 컨텍스트와 일회성 프롬프트 결합
+                    # 모든 프롬프트 결합
                     combined_context = ""
+                    if user_system_prompt:
+                        combined_context = user_system_prompt
                     if file_context:
+                        if combined_context:
+                            combined_context += "\n\n"
                         combined_context += file_context
                     if transient_prompt and transient_prompt != file_context:
                         if combined_context:
@@ -630,15 +650,24 @@ Please analyze the above file content and use it to answer the user's questions.
                     # 지속적인 파일 컨텍스트와 일회성 시스템 프롬프트 지원
                     sys_prompt = None
                     try:
+                        # 사용자 정의 시스템 프롬프트 확인
+                        user_system_prompt = self.system_prompt if hasattr(self, 'system_prompt') and self.system_prompt else ""
+                        
                         # 지속적인 파일 컨텍스트 확인 (앱 레벨에서)
                         file_context = self.get_file_context_prompt() or ""
                         
                         # 일회성 시스템 프롬프트 확인
                         transient_prompt = getattr(self, "transient_system_prompt", None) or ""
                         
-                        # 파일 컨텍스트와 일회성 프롬프트 결합
+                        # 모든 프롬프트 결합
+                        if user_system_prompt:
+                            sys_prompt = user_system_prompt
                         if file_context:
-                            sys_prompt = file_context
+                            if sys_prompt:
+                                sys_prompt += "\n\n"
+                            else:
+                                sys_prompt = ""
+                            sys_prompt += file_context
                         if transient_prompt and transient_prompt != file_context:
                             if sys_prompt:
                                 sys_prompt += "\n\n"

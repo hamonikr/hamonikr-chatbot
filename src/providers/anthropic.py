@@ -19,7 +19,28 @@ class AnthropicBaseProvider(BaseProvider):
         messages = []
         for c in chat["content"]:
             role = "assistant" if c["role"] == self.app.bot_name else "user"
-            messages.append({"role": role, "content": c["content"]})
+            
+            # Check if this is the current message and an image is attached
+            if c["content"] == prompt and hasattr(self.app, 'attached_image_data') and self.app.attached_image_data:
+                # For messages with images, use Anthropic's vision format
+                content = [
+                    {"type": "text", "text": c["content"]}
+                ]
+                # Add image data if available (convert data URL to base64)
+                image_data = self.app.attached_image_data
+                if image_data.startswith("data:image/jpeg;base64,"):
+                    base64_data = image_data.split(",")[1]
+                    content.append({
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": base64_data
+                        }
+                    })
+                messages.append({"role": role, "content": content})
+            else:
+                messages.append({"role": role, "content": c["content"]})
 
         if not self.data.get("api_key"):
             return _("No model selected, you can choose one in preferences")
@@ -30,10 +51,28 @@ class AnthropicBaseProvider(BaseProvider):
             "content-type": "application/json",
         }
 
+        # Handle the final prompt message with potential image
+        final_message_content = prompt
+        if hasattr(self.app, 'attached_image_data') and self.app.attached_image_data:
+            image_data = self.app.attached_image_data
+            if image_data.startswith("data:image/jpeg;base64,"):
+                base64_data = image_data.split(",")[1]
+                final_message_content = [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": base64_data
+                        }
+                    }
+                ]
+
         payload = {
             "model": self.model,
             "max_tokens": 1024,
-            "messages": messages + [{"role": "user", "content": prompt}],
+            "messages": messages + [{"role": "user", "content": final_message_content}],
         }
 
         if stream and callback:

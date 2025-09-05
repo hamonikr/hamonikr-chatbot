@@ -1,4 +1,6 @@
 from gi.repository import Gtk, Adw, Gio, Pango, GLib
+import json
+import os
 
 try:
     from ..constants import app_id, rootdir
@@ -27,6 +29,12 @@ class PreferencesWindow(Adw.PreferencesWindow):
     font_dialog = Gtk.Template.Child()
     line_height_spin = Gtk.Template.Child()
     webkit_rendering_switch = Gtk.Template.Child()
+    
+    # System Prompt UI elements
+    system_prompt_text = Gtk.Template.Child()
+    clear_system_prompt_btn = Gtk.Template.Child()
+    apply_system_prompt_btn = Gtk.Template.Child()
+    
 
     def __init__(self, parent, **kwargs):
         super().__init__(**kwargs)
@@ -45,6 +53,7 @@ class PreferencesWindow(Adw.PreferencesWindow):
         self.setup_signals()
         self.setup_font_settings()
         self.setup_webkit_settings()
+        self.setup_system_prompt()
 
         self.bot_name.set_text(self.app.bot_name)
         self.user_name.set_text(self.app.user_name)
@@ -214,7 +223,54 @@ class PreferencesWindow(Adw.PreferencesWindow):
         if hasattr(self.parent, 'toast_overlay'):
             self.parent.toast_overlay.add_toast(toast)
 
-
+    def setup_system_prompt(self):
+        """시스템 프롬프트 설정 초기화"""
+        # 저장된 시스템 프롬프트 불러오기
+        saved_prompt = self.settings.get_string("system-prompt")
+        if saved_prompt:
+            buffer = self.system_prompt_text.get_buffer()
+            buffer.set_text(saved_prompt)
+    
+    @Gtk.Template.Callback()
+    def on_clear_system_prompt(self, *args):
+        """시스템 프롬프트 지우기"""
+        buffer = self.system_prompt_text.get_buffer()
+        buffer.set_text("")
+        
+        # 설정에서도 제거
+        self.settings.set_string("system-prompt", "")
+        
+        # 앱에서도 제거
+        if hasattr(self.app, 'system_prompt'):
+            self.app.system_prompt = ""
+        
+        toast = Adw.Toast()
+        toast.set_title(_("System prompt cleared"))
+        if hasattr(self.parent, 'toast_overlay'):
+            self.parent.toast_overlay.add_toast(toast)
+    
+    @Gtk.Template.Callback()
+    def on_apply_system_prompt(self, *args):
+        """시스템 프롬프트 적용"""
+        buffer = self.system_prompt_text.get_buffer()
+        start_iter = buffer.get_start_iter()
+        end_iter = buffer.get_end_iter()
+        text = buffer.get_text(start_iter, end_iter, True)
+        
+        # 설정에 저장
+        self.settings.set_string("system-prompt", text)
+        
+        # 앱에 적용
+        if hasattr(self.app, 'system_prompt'):
+            self.app.system_prompt = text
+        else:
+            self.app.system_prompt = text
+        
+        toast = Adw.Toast()
+        toast.set_title(_("System prompt applied"))
+        if hasattr(self.parent, 'toast_overlay'):
+            self.parent.toast_overlay.add_toast(toast)
+    
     @Gtk.Template.Callback()
     def clear_all_chats_clicked(self, widget, *args):
         dialog = Adw.MessageDialog(

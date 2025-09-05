@@ -163,6 +163,7 @@ class BavarderWindow(Adw.ApplicationWindow):
     threads = []
     attached_file_content = None
     attached_file_name = None
+    attached_image_data = None  # base64 encoded image data
     file_extractor = None
 
     def __init__(self, **kwargs):
@@ -543,7 +544,14 @@ class BavarderWindow(Adw.ApplicationWindow):
 
     def get_file_context_prompt(self):
         """첨부된 파일이 있으면 파일 컨텍스트 프롬프트 반환"""
-        if self.attached_file_content and self.attached_file_name:
+        if self.attached_image_data:
+            # 이미지가 첨부된 경우
+            context = f"""An image file has been uploaded: {self.attached_file_name}
+
+Please analyze the image and use it to answer the user's questions."""
+            return context
+        elif self.attached_file_content and self.attached_file_name:
+            # 텍스트 파일이 첨부된 경우
             context = f"""You have access to the following file content for context:
 
 ## File: {self.attached_file_name}
@@ -1075,17 +1083,38 @@ Please analyze the above file content and use it to answer the user's questions.
                 self.show_toast(_("Unsupported file format"))
                 return
             
-            # 파일 내용 추출
-            success, content, error = self.file_extractor.extract_text(file_path)
-            
-            if not success:
-                self.show_toast(_(f"Failed to read file: {error}"))
-                return
-            
-            self.attached_file_content = content
-            # 앱 레벨에도 저장
-            self.app.attached_file_content = content
-            self.app.attached_file_name = self.attached_file_name
+            # 이미지 파일인 경우
+            if file_info.get('is_image', False):
+                # 이미지 처리 (리사이즈 및 base64 인코딩)
+                success, image_data, error = self.file_extractor.process_image(file_path, max_size=1024)
+                
+                if not success:
+                    self.show_toast(_(f"Failed to process image: {error}"))
+                    return
+                
+                self.attached_image_data = image_data
+                self.attached_file_content = f"[Image: {self.attached_file_name}]"
+                
+                # 앱 레벨에도 저장
+                self.app.attached_image_data = image_data
+                self.app.attached_file_content = self.attached_file_content
+                self.app.attached_file_name = self.attached_file_name
+                
+            else:
+                # 일반 텍스트 파일 처리
+                success, content, error = self.file_extractor.extract_text(file_path)
+                
+                if not success:
+                    self.show_toast(_(f"Failed to read file: {error}"))
+                    return
+                
+                self.attached_file_content = content
+                self.attached_image_data = None
+                
+                # 앱 레벨에도 저장
+                self.app.attached_file_content = content
+                self.app.attached_file_name = self.attached_file_name
+                self.app.attached_image_data = None
             
             # 파일 업로드 버튼 스타일 변경 (첨부됨을 표시)
             self.file_upload_button.add_css_class("suggested-action")
@@ -1105,9 +1134,12 @@ Please analyze the above file content and use it to answer the user's questions.
         """첨부된 파일 정보 초기화"""
         self.attached_file_content = None
         self.attached_file_name = None
+        self.attached_image_data = None
         # 앱 레벨에서도 초기화
         self.app.attached_file_content = None
         self.app.attached_file_name = None
+        if hasattr(self.app, 'attached_image_data'):
+            self.app.attached_image_data = None
         self.file_upload_button.remove_css_class("suggested-action")
         self.file_upload_button.set_tooltip_text(_("Attach File"))
         self.attached_file_box.set_visible(False)

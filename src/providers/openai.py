@@ -40,7 +40,23 @@ class BaseOpenAIProvider(BaseProvider):
                 role = "assistant"
             else:
                 role = "user"
-            _chat.append({"role": role, "content": c["content"]})
+            
+            # Check if this is the current message and an image is attached
+            if c["content"] == prompt and hasattr(self.app, 'attached_image_data') and self.app.attached_image_data:
+                # For messages with images, use the new format
+                content = [
+                    {"type": "text", "text": c["content"]}
+                ]
+                # Add image data if available
+                content.append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": self.app.attached_image_data
+                    }
+                })
+                _chat.append({"role": role, "content": content})
+            else:
+                _chat.append({"role": role, "content": c["content"]})
         chat = _chat
 
         if self.model:

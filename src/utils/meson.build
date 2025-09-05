@@ -12,4 +12,5 @@ conf.set('pkgdatadir', pkgdatadir)
 install_data([
   '__init__.py',
   'file_extractor.py',
+  'mcp_client.py',
 ], install_dir: moduledir)

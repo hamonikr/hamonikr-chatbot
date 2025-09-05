@@ -1,10 +1,18 @@
 import json
 import socket
+import base64
+import io
 from gettext import gettext as _
 import google.generativeai as genai
 from gi.repository import Gtk, Adw
 
 from .base import BaseProvider
+
+try:
+    from PIL import Image
+    PIL_AVAILABLE = True
+except ImportError:
+    PIL_AVAILABLE = False
 
 
 class GeminiProvider(BaseProvider):
@@ -40,8 +48,25 @@ class GeminiProvider(BaseProvider):
             # Start chat with history
             chat_session = model.start_chat(history=history)
             
-            # Send the current prompt
-            response = chat_session.send_message(prompt)
+            # Prepare the current message content
+            message_parts = [prompt]
+            
+            # Add image if available
+            if hasattr(self.app, 'attached_image_data') and self.app.attached_image_data and PIL_AVAILABLE:
+                image_data = self.app.attached_image_data
+                if image_data.startswith("data:image/jpeg;base64,"):
+                    try:
+                        # Extract base64 data
+                        base64_data = image_data.split(",")[1]
+                        # Decode and create PIL Image
+                        image_bytes = base64.b64decode(base64_data)
+                        pil_image = Image.open(io.BytesIO(image_bytes))
+                        message_parts.append(pil_image)
+                    except Exception as e:
+                        print(f"Failed to process image for Gemini: {e}")
+            
+            # Send the current prompt with image if available
+            response = chat_session.send_message(message_parts)
             return response.text
             
         except Exception as e:
