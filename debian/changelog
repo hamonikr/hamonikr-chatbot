@@ -6,6 +6,8 @@ hamonikr-chatbot (1.3.0) unstable; urgency=medium
   * Remove .postinst-setup-needed flag file generation
   * Add postrm script for proper cleanup on package removal
   * Simplify installation process for better user experience
+  * Release v1.3.0 with setup notification removal and cleanup scripts
+  * Add system prompt customization and image handling in chat
 
  -- HamoniKR <pkg@hamonikr.org>  Fri, 06 Sep 2025 16:00:00 +0900
 
