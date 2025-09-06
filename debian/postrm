@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# HamoniKR Chatbot - Debian Package Post-Remove Script
+# This script runs after package removal to clean up
+
+set -e
+
+# Configuration
+PACKAGE_NAME="hamonikr-chatbot"
+
+# Main removal logic
+case "$1" in
+    remove|purge)
+        echo "Cleaning up HamoniKR Chatbot..."
+        
+        # Remove the autostart notification file if it exists
+        if [ -f /etc/xdg/autostart/hamonikr-chatbot-setup-notify.desktop ]; then
+            rm -f /etc/xdg/autostart/hamonikr-chatbot-setup-notify.desktop
+            echo "Removed autostart notification file"
+        fi
+        
+        # Remove the setup flag file if it exists
+        if [ -f /usr/share/hamonikr-chatbot/.postinst-setup-needed ]; then
+            rm -f /usr/share/hamonikr-chatbot/.postinst-setup-needed
+            echo "Removed setup flag file"
+        fi
+        
+        # Remove setup-user-env.sh if it exists
+        if [ -f /usr/share/hamonikr-chatbot/setup-user-env.sh ]; then
+            rm -f /usr/share/hamonikr-chatbot/setup-user-env.sh
+            echo "Removed setup-user-env.sh script"
+        fi
+        
+        echo "HamoniKR Chatbot cleanup completed."
+        ;;
+        
+    upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        ;;
+        
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

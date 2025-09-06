@@ -1,3 +1,14 @@
+hamonikr-chatbot (1.3.0) unstable; urgency=medium
+
+  * Release v1.3.0
+  * Remove unnecessary initial setup notification on system startup
+  * Clean up postinst script to remove setup notification desktop file creation
+  * Remove .postinst-setup-needed flag file generation
+  * Add postrm script for proper cleanup on package removal
+  * Simplify installation process for better user experience
+
+ -- HamoniKR <pkg@hamonikr.org>  Fri, 06 Sep 2025 16:00:00 +0900
+
 hamonikr-chatbot (1.2.9) unstable; urgency=medium
 
   * Release v1.2.9
