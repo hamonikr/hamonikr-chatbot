@@ -40,53 +40,10 @@ setup_for_user() {
     fi
 }
 
-# Function to create system-wide notification script
-create_notification_script() {
-    cat > /usr/share/hamonikr-chatbot/setup-user-env.sh << 'EOF'
-#!/bin/bash
-
-# HamoniKR Chatbot User Environment Setup
-# This script can be run by users to set up their environment
-
-SETUP_SCRIPT="/usr/share/hamonikr-chatbot/scripts/debian-post-install.sh"
-
-if [ -x "$SETUP_SCRIPT" ]; then
-    echo "Setting up HamoniKR Chatbot environment for $(whoami)..."
-    exec "$SETUP_SCRIPT"
-else
-    echo "Error: Setup script not found at $SETUP_SCRIPT"
-    exit 1
-fi
-EOF
-    
-    chmod +x /usr/share/hamonikr-chatbot/setup-user-env.sh
-}
-
 # Main installation logic
 case "$1" in
     configure)
         echo "Configuring HamoniKR Chatbot..."
-        
-        # Create notification script
-        create_notification_script
-        
-        # Create a flag file to indicate post-install setup is needed
-        touch /usr/share/hamonikr-chatbot/.postinst-setup-needed
-        
-        # Create a desktop notification for setup
-        cat > /etc/xdg/autostart/hamonikr-chatbot-setup-notify.desktop << EOF
-[Desktop Entry]
-Type=Application
-Name=HamoniKR Chatbot Setup Notification
-Comment=Notify user about HamoniKR Chatbot setup
-Exec=/bin/bash -c 'if [ -f /usr/share/hamonikr-chatbot/.postinst-setup-needed ] && [ ! -f "\$HOME/.local/share/hamonikr-chatbot-venv/pyvenv.cfg" ]; then notify-send "HamoniKR Chatbot" "Initial setup required. Run: /usr/share/hamonikr-chatbot/setup-user-env.sh"; fi'
-Terminal=false
-Hidden=false
-X-GNOME-Autostart-enabled=true
-NoDisplay=true
-OnlyShowIn=GNOME;Unity;MATE;XFCE;KDE;X-Cinnamon;
-X-GNOME-Autostart-Delay=10
-EOF
         
         # Try to setup for current user if we're in a user session
         if [ -n "$SUDO_USER" ] && [ "$SUDO_USER" != "root" ]; then
@@ -98,8 +55,7 @@ EOF
         fi
         
         echo "HamoniKR Chatbot installation completed."
-        echo "Users may need to run: /usr/share/hamonikr-chatbot/setup-user-env.sh"
-        echo "or the application will automatically set up on first run."
+        echo "The application will automatically set up on first run."
         ;;
         
     abort-upgrade|abort-remove|abort-deconfigure)
