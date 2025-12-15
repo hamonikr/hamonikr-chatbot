@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: Download build artifacts for Ubuntu 24.04
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: debian-package-ubuntu2404
           path: .
